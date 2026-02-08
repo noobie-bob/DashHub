@@ -122,6 +122,7 @@ Every phase doc (`docs/phases/phase-N.md`) should include:
 - Radix UI: https://www.radix-ui.com/primitives/docs/overview/introduction
 - Tambo React package: https://www.npmjs.com/package/@tambo-ai/react
 - Model Context Protocol spec: https://modelcontextprotocol.io/specification
+- MCP reference implementation: https://github.com/modelcontextprotocol/modelcontextprotocol
 - PDF.js: https://github.com/mozilla/pdf.js
 - Tesseract.js: https://github.com/naptha/tesseract.js
 - SheetJS (xlsx): https://docs.sheetjs.com/
@@ -134,5 +135,6 @@ Every phase doc (`docs/phases/phase-N.md`) should include:
 - Phase 0: Bun + Next.js, Next.js, Tailwind CSS, shadcn/ui, Radix UI, Tambo React package
 - Phases 4–6: Tambo React package
 - Phases 13–16: PDF.js, Tesseract.js, SheetJS (xlsx), Mammoth (docx)
-- Phases 21–23: Model Context Protocol spec
+- Phases 21, 23: Model Context Protocol spec, MCP reference implementation
+- Phase 22: Tambo React package, Model Context Protocol spec, MCP reference implementation
 - Phases 24–29: sql.js, SQLite WASM docs, React Flow
