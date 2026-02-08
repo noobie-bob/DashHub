@@ -47,6 +47,7 @@ const DOM_ID_HASH_LENGTH = 12;
 function hashStringForDomId(value: string): string {
   let hash = 5381;
   for (let i = 0; i < value.length; i += 1) {
+    // hash * 33 ^ char
     hash = ((hash << 5) + hash) ^ value.charCodeAt(i);
   }
 
@@ -120,6 +121,12 @@ type SafePreviewOptions = {
   maxArrayLength?: number;
 };
 
+/**
+* Safe preview formatter for user-facing timeline rows.
+*
+* `maxLength` is treated as a hard output budget for the whole preview string,
+* so nested values will be summarized aggressively when the remaining budget is low.
+*/
 function safePreviewStringify(
   value: unknown,
   maxLengthOrOptions: number | SafePreviewOptions = 200,
@@ -187,231 +194,243 @@ function safePreviewStringify(
           if (seen.has(next)) return fit("[Circular]", budget);
           if (depth >= maxDepth) return fit(`Map(${next.size})`, budget);
           seen.add(next);
+          try {
+            let out = `Map(${next.size}) { `;
+            let hitBudget = false;
+            let count = 0;
+            let hasMore = false;
+            for (const [k, v] of next) {
+              if (count >= maxKeys) {
+                hasMore = true;
+                break;
+              }
 
-          let out = `Map(${next.size}) { `;
-          let hitBudget = false;
-          let count = 0;
-          let hasMore = false;
-          for (const [k, v] of next) {
-            if (count >= maxKeys) {
-              hasMore = true;
-              break;
-            }
-
-            if (out.length >= budget) {
-              hitBudget = true;
-              break;
-            }
-
-            if (count > 0) {
-              if (SEP.length > budget - out.length) {
+              if (out.length >= budget) {
                 hitBudget = true;
                 break;
               }
-              out += SEP;
+
+              if (count > 0) {
+                if (SEP.length > budget - out.length) {
+                  hitBudget = true;
+                  break;
+                }
+                out += SEP;
+              }
+
+              const keyPreview = preview(k, depth + 1, budget - out.length);
+              out += keyPreview.text;
+              if (keyPreview.hitBudget) {
+                hitBudget = true;
+                break;
+              }
+
+              if (MAP_ARROW.length > budget - out.length) {
+                hitBudget = true;
+                break;
+              }
+              out += MAP_ARROW;
+
+              const valuePreview = preview(v, depth + 1, budget - out.length);
+              out += valuePreview.text;
+              if (valuePreview.hitBudget) {
+                hitBudget = true;
+                break;
+              }
+
+              count += 1;
             }
 
-            const keyPreview = preview(k, depth + 1, budget - out.length);
-            out += keyPreview.text;
-            if (keyPreview.hitBudget) {
-              hitBudget = true;
-              break;
+            if (hasMore) {
+              if (MORE.length > budget - out.length) hitBudget = true;
+              else out += MORE;
             }
 
-            if (MAP_ARROW.length > budget - out.length) {
-              hitBudget = true;
-              break;
-            }
-            out += MAP_ARROW;
+            if (CLOSE_BRACE.length > budget - out.length) hitBudget = true;
+            else out += CLOSE_BRACE;
 
-            const valuePreview = preview(v, depth + 1, budget - out.length);
-            out += valuePreview.text;
-            if (valuePreview.hitBudget) {
-              hitBudget = true;
-              break;
-            }
-
-            count += 1;
+            return { text: out, hitBudget };
+          } finally {
+            seen.delete(next);
           }
-
-          if (hasMore) {
-            if (MORE.length > budget - out.length) hitBudget = true;
-            else out += MORE;
-          }
-
-          if (CLOSE_BRACE.length > budget - out.length) hitBudget = true;
-          else out += CLOSE_BRACE;
-
-          return { text: out, hitBudget };
         }
 
         if (next instanceof Set) {
           if (seen.has(next)) return fit("[Circular]", budget);
           if (depth >= maxDepth) return fit(`Set(${next.size})`, budget);
           seen.add(next);
+          try {
+            let out = `Set(${next.size}) { `;
+            let hitBudget = false;
+            let count = 0;
+            let hasMore = false;
+            for (const v of next) {
+              if (count >= maxArrayLength) {
+                hasMore = true;
+                break;
+              }
 
-          let out = `Set(${next.size}) { `;
-          let hitBudget = false;
-          let count = 0;
-          let hasMore = false;
-          for (const v of next) {
-            if (count >= maxArrayLength) {
-              hasMore = true;
-              break;
-            }
-
-            if (out.length >= budget) {
-              hitBudget = true;
-              break;
-            }
-
-            if (count > 0) {
-              if (SEP.length > budget - out.length) {
+              if (out.length >= budget) {
                 hitBudget = true;
                 break;
               }
-              out += SEP;
+
+              if (count > 0) {
+                if (SEP.length > budget - out.length) {
+                  hitBudget = true;
+                  break;
+                }
+                out += SEP;
+              }
+
+              const valuePreview = preview(v, depth + 1, budget - out.length);
+              out += valuePreview.text;
+              if (valuePreview.hitBudget) {
+                hitBudget = true;
+                break;
+              }
+
+              count += 1;
             }
 
-            const valuePreview = preview(v, depth + 1, budget - out.length);
-            out += valuePreview.text;
-            if (valuePreview.hitBudget) {
-              hitBudget = true;
-              break;
+            if (hasMore) {
+              if (MORE.length > budget - out.length) hitBudget = true;
+              else out += MORE;
             }
 
-            count += 1;
+            if (CLOSE_BRACE.length > budget - out.length) hitBudget = true;
+            else out += CLOSE_BRACE;
+
+            return { text: out, hitBudget };
+          } finally {
+            seen.delete(next);
           }
-
-          if (hasMore) {
-            if (MORE.length > budget - out.length) hitBudget = true;
-            else out += MORE;
-          }
-
-          if (CLOSE_BRACE.length > budget - out.length) hitBudget = true;
-          else out += CLOSE_BRACE;
-
-          return { text: out, hitBudget };
         }
 
         if (Array.isArray(next)) {
           if (seen.has(next)) return fit("[Circular]", budget);
           if (depth >= maxDepth) return fit(`Array(${next.length})`, budget);
           seen.add(next);
-
-          let out = "[";
-          let hitBudget = false;
-          const limit = Math.min(next.length, maxArrayLength);
-          for (let i = 0; i < limit; i += 1) {
-            if (out.length >= budget) {
-              hitBudget = true;
-              break;
-            }
-
-            if (i > 0) {
-              if (SEP.length > budget - out.length) {
+          try {
+            let out = "[";
+            let hitBudget = false;
+            const limit = Math.min(next.length, maxArrayLength);
+            for (let i = 0; i < limit; i += 1) {
+              if (out.length >= budget) {
                 hitBudget = true;
                 break;
               }
-              out += SEP;
+
+              if (i > 0) {
+                if (SEP.length > budget - out.length) {
+                  hitBudget = true;
+                  break;
+                }
+                out += SEP;
+              }
+
+              const itemPreview = preview(next[i], depth + 1, budget - out.length);
+              out += itemPreview.text;
+              if (itemPreview.hitBudget) {
+                hitBudget = true;
+                break;
+              }
             }
 
-            const itemPreview = preview(next[i], depth + 1, budget - out.length);
-            out += itemPreview.text;
-            if (itemPreview.hitBudget) {
-              hitBudget = true;
-              break;
+            if (next.length > maxArrayLength) {
+              if (MORE.length > budget - out.length) hitBudget = true;
+              else out += MORE;
             }
+
+            if (CLOSE_BRACKET.length > budget - out.length) hitBudget = true;
+            else out += CLOSE_BRACKET;
+
+            return { text: out, hitBudget };
+          } finally {
+            seen.delete(next);
           }
-
-          if (next.length > maxArrayLength) {
-            if (MORE.length > budget - out.length) hitBudget = true;
-            else out += MORE;
-          }
-
-          if (CLOSE_BRACKET.length > budget - out.length) hitBudget = true;
-          else out += CLOSE_BRACKET;
-
-          return { text: out, hitBudget };
         }
 
         if (typeof next === "object" && next !== null) {
           if (seen.has(next)) return fit("[Circular]", budget);
           if (depth >= maxDepth) return fit("{…}", budget);
           seen.add(next);
+          try {
+            if (!isRecord(next)) {
+              try {
+                const asText = String(next);
+                if (asText !== "[object Object]") return fit(asText, budget);
+              } catch {
+                // fall through
+              }
 
-          if (!isRecord(next)) {
-            try {
-              const asText = String(next);
-              if (asText !== "[object Object]") return fit(asText, budget);
-            } catch {
-              // fall through
+              const name = next.constructor?.name;
+              return fit(name ? `[${name}]` : "[Object]", budget);
             }
 
-            const name = next.constructor?.name;
-            return fit(name ? `[${name}]` : "[Object]", budget);
-          }
+            let out = "{ ";
+            let hitBudget = false;
+            let count = 0;
+            let hasMore = false;
+            for (const key in next) {
+              if (!Object.prototype.hasOwnProperty.call(next, key)) continue;
+              if (count >= maxKeys) {
+                hasMore = true;
+                break;
+              }
 
-          let out = "{ ";
-          let hitBudget = false;
-          let count = 0;
-          let hasMore = false;
-          for (const key in next) {
-            if (!Object.prototype.hasOwnProperty.call(next, key)) continue;
-            if (count >= maxKeys) {
-              hasMore = true;
-              break;
-            }
-
-            if (out.length >= budget) {
-              hitBudget = true;
-              break;
-            }
-
-            if (count > 0) {
-              if (SEP.length > budget - out.length) {
+              if (out.length >= budget) {
                 hitBudget = true;
                 break;
               }
-              out += SEP;
+
+              if (count > 0) {
+                if (SEP.length > budget - out.length) {
+                  hitBudget = true;
+                  break;
+                }
+                out += SEP;
+              }
+
+              const keyText = formatKey(key);
+              if (keyText.length + KEY_VALUE_SEP.length > budget - out.length) {
+                hitBudget = true;
+                break;
+              }
+
+              out += `${keyText}${KEY_VALUE_SEP}`;
+
+              let valueText = "[unavailable]";
+              let valueHitBudget = false;
+              try {
+                const valuePreview = preview(next[key], depth + 1, budget - out.length);
+                valueText = valuePreview.text;
+                valueHitBudget = valuePreview.hitBudget;
+              } catch {
+                // keep default
+              }
+
+              out += valueText;
+              if (valueHitBudget) {
+                hitBudget = true;
+                break;
+              }
+
+              count += 1;
             }
 
-            const keyText = formatKey(key);
-            if (keyText.length + KEY_VALUE_SEP.length > budget - out.length) {
-              hitBudget = true;
-              break;
+            if (hasMore) {
+              if (MORE.length > budget - out.length) hitBudget = true;
+              else out += MORE;
             }
 
-            out += `${keyText}${KEY_VALUE_SEP}`;
+            if (CLOSE_BRACE.length > budget - out.length) hitBudget = true;
+            else out += CLOSE_BRACE;
 
-            let valueText = "[unavailable]";
-            let valueHitBudget = false;
-            try {
-              const valuePreview = preview(next[key], depth + 1, budget - out.length);
-              valueText = valuePreview.text;
-              valueHitBudget = valuePreview.hitBudget;
-            } catch {
-              // keep default
-            }
-
-            out += valueText;
-            if (valueHitBudget) {
-              hitBudget = true;
-              break;
-            }
-
-            count += 1;
+            return { text: out, hitBudget };
+          } finally {
+            seen.delete(next);
           }
-
-          if (hasMore) {
-            if (MORE.length > budget - out.length) hitBudget = true;
-            else out += MORE;
-          }
-
-          if (CLOSE_BRACE.length > budget - out.length) hitBudget = true;
-          else out += CLOSE_BRACE;
-
-          return { text: out, hitBudget };
         }
 
         return fit("[unserializable]", budget);
@@ -422,8 +441,9 @@ function safePreviewStringify(
   };
 
   const result = preview(value, 0, maxLength);
-  const text = result.text.length <= maxLength ? result.text : result.text.slice(0, maxLength);
-  return result.hitBudget ? `${text}…` : text;
+  if (!result.hitBudget) return result.text;
+  if (result.text.endsWith("…")) return result.text;
+  return `${result.text}…`;
 }
 
 function safePreview(value: unknown, options?: number | SafePreviewOptions): string {
