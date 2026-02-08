@@ -96,7 +96,10 @@ function EventItem({
 
   return (
     <button
+      type="button"
       onClick={onClick}
+      aria-expanded={isSelected}
+      aria-controls={isSelected ? `event-details-${event.id}` : undefined}
       className={`w-full flex items-start gap-3 px-3 py-2 text-left transition-colors hover:bg-muted/50 ${
         isSelected ? "bg-muted" : ""
       }`}
@@ -118,15 +121,19 @@ function EventItem({
       <div className="mt-0.5 shrink-0 text-muted-foreground">
         <ChevronRight
           className={`h-4 w-4 transition-transform ${isSelected ? "rotate-90" : ""}`}
+          aria-hidden="true"
         />
       </div>
     </button>
   );
 }
 
-function EventDetails({ event }: { event: EventRecord }) {
+function EventDetails({ event, id }: { event: EventRecord; id: string }) {
   return (
-    <div className="border-t border-border bg-muted/30 p-3 space-y-3 animate-in fade-in slide-in-from-top-1 duration-200">
+    <div
+      id={id}
+      className="border-t border-border bg-muted/30 p-3 space-y-3 animate-in fade-in slide-in-from-top-1 duration-200"
+    >
       <div className="grid grid-cols-2 gap-2">
         <div>
           <p className="text-[10px] uppercase font-bold text-muted-foreground mb-0.5">Event ID</p>
@@ -202,7 +209,9 @@ export function EventTimeline() {
                   isSelected={selectedId === event.id}
                   onClick={() => setSelectedId(selectedId === event.id ? null : event.id)}
                 />
-                {selectedId === event.id && <EventDetails event={event} />}
+                {selectedId === event.id && (
+                  <EventDetails id={`event-details-${event.id}`} event={event} />
+                )}
               </div>
             ))}
           </div>
