@@ -34,6 +34,8 @@ interface StoreContextType {
   setDockWidth: (width: number) => void;
 }
 
+const MAX_EVENTS = 1000;
+
 const defaultState: SessionState = {
   events: [],
   ui: {
@@ -44,13 +46,7 @@ const defaultState: SessionState = {
 
 const StoreContext = createContext<StoreContextType | null>(null);
 
-export function StoreProvider({
-  children,
-  hasTambo,
-}: {
-  children: ReactNode;
-  hasTambo: boolean;
-}) {
+export function StoreProvider({ children, hasTambo }: { children: ReactNode; hasTambo: boolean }) {
   const [state, setState] = useState<SessionState>(() => ({
     ...defaultState,
     ui: {
@@ -62,10 +58,13 @@ export function StoreProvider({
   const recordEvent = useCallback(
     (kind: EventKind, data: { inputs?: unknown; outputs?: unknown }, refs?: EventRefs): EventRecord => {
       const event = createEvent(kind, data, refs);
-      setState((prev) => ({
-        ...prev,
-        events: [...prev.events, event],
-      }));
+      setState((prev) => {
+        const nextEvents = [...prev.events, event];
+        return {
+          ...prev,
+          events: nextEvents.length > MAX_EVENTS ? nextEvents.slice(nextEvents.length - MAX_EVENTS) : nextEvents,
+        };
+      });
       return event;
     },
     []
