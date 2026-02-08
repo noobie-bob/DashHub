@@ -32,9 +32,7 @@ yarn-error.log*
 
 # env files
 # All non-`.example` env files are treated as secrets and must never be committed
-.env
-.env.*
-.env*.local
+.env*
 
 # IMPORTANT: this must stay after the env ignore rules above
 # to ensure example templates remain tracked.
