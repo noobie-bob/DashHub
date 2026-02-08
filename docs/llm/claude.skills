@@ -65,7 +65,7 @@ The key constraints behind these responsibilities are tracked as decisions in `d
 - Implement MCP server config UX (modal, list) stored in localStorage.
 - Wire `mcpServers` into TamboProvider.
 - Implement user approval UI and provenance for MCP calls.
-- Be mindful of MCP transport and origin risks.
+- Be mindful of MCP transport and origin risks. (Repo: https://github.com/modelcontextprotocol/modelcontextprotocol)
 
 ### Skill: SQLite (Phase 24+)
 - Use sql.js to import user-uploaded sqlite files into an in-memory DB. (Project: https://github.com/sql-js/sql.js)

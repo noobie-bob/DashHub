@@ -9,7 +9,7 @@ The goal is to keep generation deterministic and architecture-consistent while b
 - **Next.js + TypeScript**
 - **Bun** runtime (`bun --bun next dev/build/start`) (Bun Next.js guide: https://bun.sh/docs/guides/ecosystem/nextjs)
 - **Tailwind + shadcn/ui + Radix UI** (app chrome)
-- **Tambo** for generative UI (https://www.npmjs.com/package/@tambo-ai/react)
+- **Tambo** for generative UI (package: https://www.npmjs.com/package/@tambo-ai/react)
 - **MCP** (Model Context Protocol) integrations **client-side** (browser → MCP server) (spec: https://modelcontextprotocol.io/specification/2025-06-18, repo: https://github.com/modelcontextprotocol/modelcontextprotocol)
 
 ---
@@ -34,6 +34,10 @@ Agent-runner operational instructions:
 - Read phase doc → implement → verify acceptance checklist
 - Never break invariants
 - Ensure event logging for meaningful state transitions
+
+### 4) `templates/`
+Reusable prompt templates:
+- `templates/planning-spec.md`
 
 ---
 

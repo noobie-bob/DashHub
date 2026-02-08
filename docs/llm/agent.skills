@@ -65,7 +65,7 @@ These constraints correspond to DEC-0001..DEC-0003 in `docs/architecture/decisio
 - Add client-side MCP server config UI stored in localStorage.
 - Wire MCP servers into TamboProvider.
 - Add approval UX and provenance recording.
-- Follow MCP transport and origin/security considerations.
+- Follow MCP transport and origin/security considerations. (Repo: https://github.com/modelcontextprotocol/modelcontextprotocol)
 
 ### 7) DatabaseSkill (Phases 24–29)
 - SQLite in-memory via sql.js from uploaded file bytes. (Project: https://github.com/sql-js/sql.js)

@@ -1,8 +1,8 @@
 # Planning Spec template
 
-This is a reusable planning template intended for agent runners.
+Use this as a prompt scaffold when you want an agent to produce a structured implementation plan.
 
-Everything inside the fenced template below is an example structure. Adapt it to the current phase/feature, and always follow the phase doc + `docs/llm/llm.txt` when they conflict.
+If your runner supports tool headers, you may optionally prepend something like:
 
 ```text
 ---
@@ -10,6 +10,7 @@ name: planner
 description: Synthesizes research findings into a structured, concise implementation plan
 tools: Read, Write, Glob
 ---
+```
 
 ## Planning Spec (applies to phases and features)
 
@@ -22,80 +23,65 @@ You will receive:
 
 Create a focused plan with this structure:
 
-# Feature: [Feature Name]
+# Feature: {Feature Name}
 
 ## Overview
 
-[2-3 sentences: what will be built and why]
+{2-3 sentences: what will be built and why}
 
 ## Key Design Decisions
 
-- **Decision 1**: [Brief rationale]
-- **Decision 2**: [Brief rationale]
-- **Decision 3**: [Brief rationale]
+- **Decision 1**: {Brief rationale}
+- **Decision 2**: {Brief rationale}
+- **Decision 3**: {Brief rationale}
 
 ## Architecture
 
-[Text-based diagram or brief description of data flow]
+{Text-based diagram or brief description of data flow}
 
 ## Component Schema/Interface
 
-[Show the key prop schema or interface - this helps validate the design]
+{Show the key prop schema or interface - this helps validate the design}
 
-```typescript
-// Example of what AI will generate
+```ts
+// Example shape (replace with real props)
 {
   prop1: "value",
-  prop2: { /* ... */ }
+  prop2: { nested: true }
 }
 ```
 
-File Structure
-Plain Text
+## File Structure
+
+```text
 src/
 ├── components/
 │   ├── new-file.tsx (NEW)
 │   └── existing-file.tsx (MODIFIED)
 ├── hooks/
 │   └── useCustomHook.ts (NEW)
+```
 
-Implementation Phases
+## Implementation Phases
 
-Phase 1: [Phase Name]
-[1 sentence: what this phase accomplishes]
+### Phase 1: {Phase Name}
+{1 sentence: what this phase accomplishes}
 
 Files:
-
-path/to/file1.ts (NEW) - [Brief description]
-path/to/file2.tsx (MODIFIED) - [Brief description]
+- path/to/file1.ts (NEW) - {Brief description}
+- path/to/file2.tsx (MODIFIED) - {Brief description}
 
 Key Implementation Details:
+- Task 1: {Specific actionable task}
+- Task 2: {Specific actionable task}
 
-Task 1: [Specific actionable task]
-Task 2: [Specific actionable task]
+### Phase 2: {Phase Name}
+{Continue pattern...}
 
-[Include pseudocode ONLY for the most complex/critical logic:]
-
-Plain Text
-function complexOperation(data):
-  // Parse and validate
-  coords = parseA1Notation(range)
-
-  // Transform data
-  cells = extractCells(coords)
-  values = cells.map(cell => getValue(cell))
-
-  // Subscribe to changes
-  subscribe(store, () => refetch())
-
-Phase 2: [Phase Name]
-[Continue pattern...]
-
-Out of Scope (v1)
+## Out of Scope (v1)
 
 List features explicitly excluded from v1 to keep implementation focused. Include brief rationale for each.
 
-Feature 1 - Brief reason why it's excluded (complexity, separate concern, etc.)
-Feature 2 - Brief reason why it's excluded
-Feature 3 - Brief reason why it's excluded
-```
+- Feature 1 - {Reason}
+- Feature 2 - {Reason}
+- Feature 3 - {Reason}

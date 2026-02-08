@@ -18,14 +18,12 @@ By the end of Phase 0 you will have:
 ---
 
 ## 0.2 Architecture (1–2 lines)
-
 - **Runtime:** Bun executes Next.js (`bun --bun`) for development and scripts.
 - **Generative UI:** Tambo runs the agent loop; you register UI components and tools with schemas and Tambo renders the results.
 
 ---
 
 ## 0.3 Key Decisions (record these now)
-
 These decisions are tracked in `docs/architecture/decisions.md`:
 
 1. [DEC-0001 — Single-user prototype](../architecture/decisions.md#dec-0001--single-user-prototype)
@@ -34,7 +32,12 @@ These decisions are tracked in `docs/architecture/decisions.md`:
 
 ---
 
-## 0.4 Setup Tasks (step-by-step)
+## 0.4 Setup Tasks (reproducible)
+
+### Prerequisites
+
+- Bun installed and available on PATH (`bun --version`).
+- You are at the repo root.
 
 ### A) Ensure Bun runtime is used for Next.js
 
@@ -50,6 +53,11 @@ Bun’s Next.js guide recommends running Next using Bun’s runtime by prefixing
 ```bash
 bun create next-app@latest .
 ```
+
+Recommended options:
+- TypeScript: yes
+- ESLint: yes
+- Tailwind: yes
 
 2) If a Next.js app already exists:
 ```bash
@@ -72,7 +80,6 @@ Update `package.json` scripts:
 This guarantees Bun executes the Next.js CLI.
 
 **Verify:**
-
 ```bash
 bun --version
 bun install
@@ -102,6 +109,15 @@ Ensure your global CSS includes the Tailwind directives (typically in `app/globa
 
 **Outcome:** Tailwind styles apply correctly in development.
 
+If you didn’t enable Tailwind during `bun create next-app`, follow the official Next.js Tailwind guide: [tailwindcss.com/docs/guides/nextjs](https://tailwindcss.com/docs/guides/nextjs)
+
+Minimal command path (if you want it inline):
+
+```bash
+bun add -d tailwindcss postcss autoprefixer
+bunx tailwindcss init -p
+```
+
 ---
 
 ### C) Add shadcn/ui + Radix UI Baseline
@@ -128,15 +144,27 @@ A minimal Design System Baseline Page demonstrating 3–5 primitives, such as:
 - Tabs
 - Toast
 
+Initialize shadcn/ui using its docs: [ui.shadcn.com/docs/installation/next](https://ui.shadcn.com/docs/installation/next)
+
+Minimal command path (if you want it inline):
+
+```bash
+bunx shadcn@latest init
+```
+
 ---
 
 ### D) Add Tambo and Verify Provider Wiring
-
 Tambo is a generative UI toolkit for React that manages agent state, streaming, and MCP interactions.
 
 **Tasks**
 
-- Install `@tambo-ai/react`
+- Install `@tambo-ai/react`:
+
+  ```bash
+  bun add @tambo-ai/react zod
+  ```
+
 - Mount `TamboProvider` at the application root
 - Render a minimal thread UI using Tambo hooks (thread + input)
 
