@@ -6,6 +6,13 @@ import { type EventRecord, createEvent, type EventKind, type EventRefs } from ".
 export const DOCK_TABS = ["chat", "events", "artifacts", "mcp", "db"] as const;
 export type DockTab = (typeof DOCK_TABS)[number];
 
+export const DOCK_WIDTH_MIN = 280;
+export const DOCK_WIDTH_MAX = 600;
+
+function clampDockWidth(width: number): number {
+  return Math.max(DOCK_WIDTH_MIN, Math.min(DOCK_WIDTH_MAX, width));
+}
+
 // UI State
 export interface UIState {
   dockWidth: number;
@@ -69,7 +76,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const setDockWidth = useCallback((width: number) => {
     setState((prev) => ({
       ...prev,
-      ui: { ...prev.ui, dockWidth: width },
+      ui: { ...prev.ui, dockWidth: clampDockWidth(width) },
     }));
   }, []);
 

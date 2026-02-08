@@ -3,7 +3,7 @@
 import { Canvas } from "./Canvas";
 import { Dock } from "./Dock";
 import { useState, useCallback, useRef } from "react";
-import { useStore } from "@/lib/store";
+import { DOCK_WIDTH_MAX, DOCK_WIDTH_MIN, useStore } from "@/lib/store";
 
 export function Workbench() {
   const { state, setDockWidth } = useStore();
@@ -13,7 +13,7 @@ export function Workbench() {
   const containerRef = useRef<HTMLDivElement>(null);
 
   const clampDockWidth = useCallback((width: number) => {
-    return Math.max(280, Math.min(600, width));
+    return Math.max(DOCK_WIDTH_MIN, Math.min(DOCK_WIDTH_MAX, width));
   }, []);
 
   const persistedDockWidth = clampDockWidth(state.ui.dockWidth);
