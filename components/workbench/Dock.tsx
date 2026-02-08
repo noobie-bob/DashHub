@@ -13,19 +13,27 @@ export function Dock() {
   const { state, setActiveDockTab } = useStore();
   const apiKey = process.env.NEXT_PUBLIC_TAMBO_API_KEY;
   const hasTambo = Boolean(apiKey);
+  const activeDockTab = state.ui.activeDockTab;
+
+  const isDockTab = (tab: string): tab is UIState["activeDockTab"] => {
+    return tab === "chat" || tab === "events" || tab === "artifacts" || tab === "mcp" || tab === "db";
+  };
 
   useEffect(() => {
     if (hasTambo) return;
-    if (state.ui.activeDockTab !== "chat") return;
+    if (activeDockTab !== "chat") return;
     setActiveDockTab("events");
-  }, [hasTambo, setActiveDockTab, state.ui.activeDockTab]);
+  }, [activeDockTab, hasTambo, setActiveDockTab]);
 
   return (
     <div className="flex h-full flex-col bg-background">
       <Tabs
         id="dock-tabs"
-        value={state.ui.activeDockTab}
-        onValueChange={(tab) => setActiveDockTab(tab as UIState["activeDockTab"])}
+        value={activeDockTab}
+        onValueChange={(tab) => {
+          if (!isDockTab(tab)) return;
+          setActiveDockTab(tab);
+        }}
         className="flex h-full flex-col"
       >
         {/* Tab List */}
