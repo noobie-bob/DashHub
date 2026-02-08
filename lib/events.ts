@@ -29,11 +29,8 @@ export interface EventRecord {
   refs?: EventRefs;
 }
 
-let eventIdCounter = 0;
-
 function generateEventId(): string {
-  eventIdCounter++;
-  return `evt_${Date.now()}_${eventIdCounter}`;
+  return crypto.randomUUID();
 }
 
 /**
