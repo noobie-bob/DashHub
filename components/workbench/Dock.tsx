@@ -6,7 +6,7 @@ import { ChatThread } from "../chat/ChatThread";
 import { ChatComposer } from "../chat/ChatComposer";
 import { EventTimeline } from "../events/EventTimeline";
 import { MessageSquare, FileBox, Server, Database, Clock } from "lucide-react";
-import { useStore } from "@/lib/store";
+import { useStore, type UIState } from "@/lib/store";
 import { useEffect } from "react";
 
 export function Dock() {
@@ -25,7 +25,7 @@ export function Dock() {
       <Tabs
         id="dock-tabs"
         value={state.ui.activeDockTab}
-        onValueChange={setActiveDockTab}
+        onValueChange={(tab) => setActiveDockTab(tab as UIState["activeDockTab"])}
         className="flex h-full flex-col"
       >
         {/* Tab List */}
