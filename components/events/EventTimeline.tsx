@@ -18,23 +18,27 @@ function EventIcon({ kind }: { kind: EventRecord["kind"] }) {
   }
 }
 
+const timeFormatter = new Intl.DateTimeFormat(undefined, {
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+});
+
 function formatTime(ts: number): string {
-  return new Date(ts).toLocaleTimeString("en-US", {
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  });
+  return timeFormatter.format(new Date(ts));
 }
 
+const fullDateFormatter = new Intl.DateTimeFormat(undefined, {
+  month: "short",
+  day: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+  fractionalSecondDigits: 3,
+});
+
 function formatFullDate(ts: number): string {
-  return new Date(ts).toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    fractionalSecondDigits: 3,
-  });
+  return fullDateFormatter.format(new Date(ts));
 }
 
 function getEventDetailsId(eventId: string): string {
@@ -86,27 +90,170 @@ function safeStringify(value: unknown, { indent = 0 }: { indent?: number } = {})
   }
 }
 
+type SafePreviewOptions = {
+  maxLength?: number;
+  maxDepth?: number;
+  maxKeys?: number;
+  maxArrayLength?: number;
+};
+
+function safePreviewStringify(
+  value: unknown,
+  maxLengthOrOptions: number | SafePreviewOptions = 200,
+): string {
+  const options =
+    typeof maxLengthOrOptions === "number" ? { maxLength: maxLengthOrOptions } : maxLengthOrOptions;
+
+  const { maxLength = 200, maxDepth = 2, maxKeys = 12, maxArrayLength = 12 } = options;
+  const seen = new WeakSet<object>();
+
+  const truncate = (text: string) => {
+    if (text.length <= maxLength) return text;
+    return `${text.slice(0, maxLength)}…`;
+  };
+
+  const formatKey = (key: string) => {
+    if (/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(key)) return key;
+    return JSON.stringify(key);
+  };
+
+  const preview = (next: unknown, depth: number): string => {
+    if (next === null) return "null";
+
+    switch (typeof next) {
+      case "string": {
+        const truncated = next.length > maxLength ? `${next.slice(0, maxLength)}…` : next;
+        return depth === 0 ? truncated : JSON.stringify(truncated);
+      }
+      case "number":
+      case "boolean":
+      case "undefined":
+        return String(next);
+      case "bigint":
+        return `${next.toString()}n`;
+      case "symbol":
+      case "function":
+        return String(next);
+      case "object": {
+        if (next instanceof Error) {
+          return next.message ? `${next.name}: ${next.message}` : next.name;
+        }
+
+        if (next instanceof Date) {
+          try {
+            return next.toISOString();
+          } catch {
+            return `Date(${String(next)})`;
+          }
+        }
+
+        if (next instanceof Map) {
+          if (seen.has(next)) return "[Circular]";
+          if (depth >= maxDepth) return `Map(${next.size})`;
+          seen.add(next);
+
+          const parts: string[] = [];
+          let count = 0;
+          let hasMore = false;
+          for (const [k, v] of next) {
+            if (count >= maxKeys) {
+              hasMore = true;
+              break;
+            }
+            parts.push(`${preview(k, depth + 1)} => ${preview(v, depth + 1)}`);
+            count += 1;
+          }
+
+          return `Map(${next.size}) { ${parts.join(", ")}${hasMore ? ", …" : ""} }`;
+        }
+
+        if (next instanceof Set) {
+          if (seen.has(next)) return "[Circular]";
+          if (depth >= maxDepth) return `Set(${next.size})`;
+          seen.add(next);
+
+          const parts: string[] = [];
+          let count = 0;
+          let hasMore = false;
+          for (const v of next) {
+            if (count >= maxArrayLength) {
+              hasMore = true;
+              break;
+            }
+            parts.push(preview(v, depth + 1));
+            count += 1;
+          }
+
+          return `Set(${next.size}) { ${parts.join(", ")}${hasMore ? ", …" : ""} }`;
+        }
+
+        if (Array.isArray(next)) {
+          if (seen.has(next)) return "[Circular]";
+          if (depth >= maxDepth) return `Array(${next.length})`;
+          seen.add(next);
+
+          const parts: string[] = [];
+          const limit = Math.min(next.length, maxArrayLength);
+          for (let i = 0; i < limit; i += 1) {
+            parts.push(preview(next[i], depth + 1));
+          }
+
+          return `[${parts.join(", ")}${next.length > maxArrayLength ? ", …" : ""}]`;
+        }
+
+        if (typeof next === "object" && next !== null) {
+          if (seen.has(next)) return "[Circular]";
+          if (depth >= maxDepth) return "{…}";
+          seen.add(next);
+
+          if (!isRecord(next)) {
+            try {
+              const asText = String(next);
+              if (asText !== "[object Object]") return asText;
+            } catch {
+              // fall through
+            }
+
+            const name = next.constructor?.name;
+            return name ? `[${name}]` : "[Object]";
+          }
+
+          const parts: string[] = [];
+          let count = 0;
+          let hasMore = false;
+          for (const key in next) {
+            if (!Object.prototype.hasOwnProperty.call(next, key)) continue;
+            if (count >= maxKeys) {
+              hasMore = true;
+              break;
+            }
+
+            let valuePreview = "[unavailable]";
+            try {
+              valuePreview = preview(next[key], depth + 1);
+            } catch {
+              // keep default
+            }
+
+            parts.push(`${formatKey(key)}: ${valuePreview}`);
+            count += 1;
+          }
+
+          return `{ ${parts.join(", ")}${hasMore ? ", …" : ""} }`;
+        }
+
+        return "[unserializable]";
+      }
+      default:
+        return "[unserializable]";
+    }
+  };
+
+  return truncate(preview(value, 0));
+}
+
 function safePreview(value: unknown, maxLength = 200): string {
-  if (typeof value === "string") {
-    return value.length > maxLength ? `${value.slice(0, maxLength)}…` : value;
-  }
-
-  if (typeof value === "number" || typeof value === "boolean" || value == null) {
-    return String(value);
-  }
-
-  if (typeof value === "bigint") return `${value.toString()}n`;
-  if (typeof value === "symbol") return value.toString();
-  if (typeof value === "function") return value.name ? `[Function: ${value.name}]` : "[Function]";
-
-  if (value instanceof Error) return `${value.name}: ${value.message}`;
-  if (value instanceof Date) return value.toISOString();
-  if (value instanceof Map) return `Map(${value.size})`;
-  if (value instanceof Set) return `Set(${value.size})`;
-  if (value instanceof RegExp) return value.toString();
-
-  const serialized = safeStringify(value);
-  return serialized.length > maxLength ? `${serialized.slice(0, maxLength)}…` : serialized;
+  return safePreviewStringify(value, maxLength);
 }
 
 function getEventPreview(event: EventRecord): string {
