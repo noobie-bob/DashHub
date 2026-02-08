@@ -38,13 +38,13 @@ function formatFullDate(ts: number): string {
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 function safePreviewStringify(value: unknown, maxLength = 200): string {
   try {
     const serialized = JSON.stringify(value);
-    if (!serialized) return "";
+    if (serialized === undefined) return "[unserializable]";
 
     if (serialized.length > maxLength) {
       return `${serialized.slice(0, maxLength)}…`;
