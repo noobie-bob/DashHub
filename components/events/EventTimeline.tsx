@@ -41,7 +41,7 @@ function formatFullDate(ts: number): string {
   return fullDateFormatter.format(new Date(ts));
 }
 
-function hashString(value: string): string {
+function hashStringForDomId(value: string): string {
   let hash = 5381;
   for (let i = 0; i < value.length; i += 1) {
     hash = ((hash << 5) + hash) ^ value.charCodeAt(i);
@@ -59,7 +59,7 @@ function getEventDetailsId(eventId: string): string {
 
   const safe = normalized.length <= 64 ? normalized : normalized.slice(-64);
 
-  return `event-details-${safe || "unknown"}-${hashString(eventId)}`;
+  return `event-details-${safe || "unknown"}-${hashStringForDomId(eventId)}`;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
