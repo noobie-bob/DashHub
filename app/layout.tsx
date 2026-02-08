@@ -1,7 +1,5 @@
-"use client";
-
 import { Geist, Geist_Mono } from "next/font/google";
-import { TamboProvider } from "@tambo-ai/react";
+import { Providers } from "./providers";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -24,9 +22,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <TamboProvider apiKey={process.env.NEXT_PUBLIC_TAMBO_API_KEY || ""}>
-          {children}
-        </TamboProvider>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
