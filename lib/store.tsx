@@ -6,7 +6,7 @@ import { type EventRecord, createEvent, type EventKind, type EventRefs } from ".
 // UI State
 export interface UIState {
   dockWidth: number;
-  activeDockTab: "chat" | "artifacts" | "mcp" | "db";
+  activeDockTab: "chat" | "events" | "artifacts" | "mcp" | "db";
 }
 
 // Session State
