@@ -9,14 +9,17 @@ import { useCallback } from "react";
 export function ChatComposer() {
   const { value, setValue, submit, isPending } = useTamboThreadInput();
 
+  const submitIfAllowed = useCallback(() => {
+    if (!value.trim() || isPending) return;
+    submit({ streamResponse: true });
+  }, [value, isPending, submit]);
+
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
       e.preventDefault();
-      if (value.trim() && !isPending) {
-        submit({ streamResponse: true });
-      }
+      submitIfAllowed();
     },
-    [value, isPending, submit]
+    [submitIfAllowed]
   );
 
   const handleKeyDown = useCallback(
@@ -24,11 +27,9 @@ export function ChatComposer() {
       if (e.key !== "Enter" || e.shiftKey) return;
 
       e.preventDefault();
-      if (!value.trim() || isPending) return;
-
-      submit({ streamResponse: true });
+      submitIfAllowed();
     },
-    [value, isPending, submit]
+    [submitIfAllowed]
   );
 
   return (
