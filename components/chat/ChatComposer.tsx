@@ -19,22 +19,11 @@ export function ChatComposer() {
     [value, isPending, submit]
   );
 
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        handleSubmit(e as unknown as React.FormEvent);
-      }
-    },
-    [handleSubmit]
-  );
-
   return (
     <form onSubmit={handleSubmit} className="flex gap-2">
       <Input
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        onKeyDown={handleKeyDown}
         placeholder="Type a message..."
         disabled={isPending}
         className="flex-1"
