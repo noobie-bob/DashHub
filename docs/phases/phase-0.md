@@ -115,9 +115,7 @@ Add this in `app/globals.css`:
 Ensure your global CSS includes the Tailwind directives (typically in `app/globals.css` or `src/app/globals.css`):
 
 ```css
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 ```
 
 **Outcome:** Tailwind styles apply correctly in development.
@@ -244,7 +242,7 @@ docs/
 
 Phase 0 is complete when all of the following are true:
 
-- `bun --bun next dev` runs successfully and serves the app
+- `bun run dev` runs successfully and serves the app
 - Tailwind styles apply and hot-reload correctly
 - At least one shadcn/Radix component renders (e.g., Dialog or Tabs)
 - `TamboProvider` is mounted and a basic thread UI renders messages

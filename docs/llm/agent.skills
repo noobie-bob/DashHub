@@ -13,7 +13,7 @@ Generative UI is powered by Tambo component registration + tool calls. (Package:
 - Single user only.
 - SQLite upload is session-only, in-memory.
 - MCP is client-side (browser -> MCP server). (Spec: https://modelcontextprotocol.io/specification/2025-06-18)
-- Bun runtime is used to run Next (`bun --bun next ...`). (Bun Next.js guide: https://bun.sh/docs/guides/ecosystem/nextjs)
+- Bun runtime is used to run Next (`bun run ...`). (Bun Next.js guide: https://bun.sh/docs/guides/ecosystem/nextjs)
 
 These constraints correspond to DEC-0001..DEC-0003 in `docs/architecture/decisions.md` and must not drift.
 
@@ -34,7 +34,7 @@ These constraints correspond to DEC-0001..DEC-0003 in `docs/architecture/decisio
 ## Capabilities (Skills)
 
 ### 1) RepoBootstrapSkill (Phase 0)
-- Setup Bun scripts for Next (`bun --bun next dev/build/start`).
+- Setup Bun scripts for Next (`bun run dev/build/start`).
 - Setup Tailwind + shadcn/radix baseline.
 - Setup TamboProvider wiring.
 
@@ -90,5 +90,5 @@ These constraints correspond to DEC-0001..DEC-0003 in `docs/architecture/decisio
 - Implement the phase.
 - Provide commands:
   - bun install
-  - bun --bun next dev
+  - bun run dev
 - Provide test prompts or manual steps matching acceptance checklist.
