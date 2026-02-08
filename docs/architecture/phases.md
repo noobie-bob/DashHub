@@ -134,6 +134,7 @@ See **References (primary docs)** and **Phase → references map** at the bottom
 - React Flow: https://reactflow.dev/
 
 ### Phase → references map (quick lookup)
+Phases can span multiple tool areas; use this as a starting point and cross-reference as needed.
 - Phase 0: Bun + Next.js, Next.js, Tailwind CSS, shadcn/ui, Radix UI, Tambo React package
 - Phases 4–6 (Tambo widgets + local tools): Tambo React package
 - Phases 13–16 (ingestion tooling): PDF.js, Tesseract.js, SheetJS (xlsx), Mammoth (docx)
