@@ -16,6 +16,8 @@ Every phase doc (`docs/phases/phase-N.md`) should include:
 
 ## Overview (high level)
 
+See **References (primary docs)** and **Phase → references map** at the bottom for the underlying tool/library docs.
+
 ### Phase 0 — Project bootstrap
 - Bun + Next scripts, Tailwind + shadcn/radix baseline, Tambo provider wiring.
 
@@ -133,8 +135,8 @@ Every phase doc (`docs/phases/phase-N.md`) should include:
 
 ### Phase → references map (quick lookup)
 - Phase 0: Bun + Next.js, Next.js, Tailwind CSS, shadcn/ui, Radix UI, Tambo React package
-- Phases 4–6: Tambo React package
-- Phases 13–16: PDF.js, Tesseract.js, SheetJS (xlsx), Mammoth (docx)
-- Phases 21, 23: Model Context Protocol spec, MCP reference implementation
-- Phase 22: Tambo React package, Model Context Protocol spec, MCP reference implementation
-- Phases 24–29: sql.js, SQLite WASM docs, React Flow
+- Phases 4–6 (Tambo widgets + local tools): Tambo React package
+- Phases 13–16 (ingestion tooling): PDF.js, Tesseract.js, SheetJS (xlsx), Mammoth (docx)
+- Phases 21, 23 (MCP config + approvals): Model Context Protocol spec, MCP reference implementation
+- Phase 22 (MCP wiring): Tambo React package, Model Context Protocol spec, MCP reference implementation
+- Phases 24–29 (SQLite + ERD tooling): sql.js, SQLite WASM docs, React Flow
