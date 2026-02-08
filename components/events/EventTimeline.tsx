@@ -123,10 +123,18 @@ function safePreviewStringify(
 
   const { maxLength = 200, maxDepth = 2, maxKeys = 12, maxArrayLength = 12 } = options;
   const seen = new WeakSet<object>();
+  let hitBudget = false;
 
   const truncate = (text: string) => {
     if (text.length <= maxLength) return text;
     return `${text.slice(0, maxLength)}…`;
+  };
+
+  const finalize = (text: string) => {
+    if (!hitBudget) return truncate(text);
+
+    if (text.length >= maxLength) return `${text.slice(0, maxLength)}…`;
+    return `${text}…`;
   };
 
   const formatKey = (key: string) => {
@@ -134,43 +142,57 @@ function safePreviewStringify(
     return JSON.stringify(key);
   };
 
-  const preview = (next: unknown, depth: number): string => {
-    if (next === null) return "null";
+  const fit = (text: string, budget: number) => {
+    if (text.length <= budget) return text;
+    hitBudget = true;
+    return text.slice(0, budget);
+  };
+
+  const preview = (next: unknown, depth: number, budget: number): string => {
+    if (budget <= 0) {
+      hitBudget = true;
+      return "";
+    }
+
+    if (hitBudget) return "";
+
+    if (next === null) return fit("null", budget);
 
     switch (typeof next) {
       case "string": {
         const truncated = next.length > maxLength ? `${next.slice(0, maxLength)}…` : next;
-        return depth === 0 ? truncated : JSON.stringify(truncated);
+        const text = depth === 0 ? truncated : JSON.stringify(truncated);
+        return fit(text, budget);
       }
       case "number":
       case "boolean":
       case "undefined":
-        return String(next);
+        return fit(String(next), budget);
       case "bigint":
-        return `${next.toString()}n`;
+        return fit(`${next.toString()}n`, budget);
       case "symbol":
       case "function":
-        return String(next);
+        return fit(String(next), budget);
       case "object": {
         if (next instanceof Error) {
-          return next.message ? `${next.name}: ${next.message}` : next.name;
+          const text = next.message ? `${next.name}: ${next.message}` : next.name;
+          return fit(text, budget);
         }
 
         if (next instanceof Date) {
           try {
-            return next.toISOString();
+            return fit(next.toISOString(), budget);
           } catch {
-            return `Date(${String(next)})`;
+            return fit(`Date(${String(next)})`, budget);
           }
         }
 
         if (next instanceof Map) {
-          if (seen.has(next)) return "[Circular]";
-          if (depth >= maxDepth) return `Map(${next.size})`;
+          if (seen.has(next)) return fit("[Circular]", budget);
+          if (depth >= maxDepth) return fit(`Map(${next.size})`, budget);
           seen.add(next);
 
-          const parts: string[] = [];
-          let previewLength = 0;
+          let out = `Map(${next.size}) { `;
           let count = 0;
           let hasMore = false;
           for (const [k, v] of next) {
@@ -179,28 +201,46 @@ function safePreviewStringify(
               break;
             }
 
-            const segment = `${preview(k, depth + 1)} => ${preview(v, depth + 1)}`;
-            const sepLength = parts.length > 0 ? 2 : 0;
-            if (previewLength + sepLength + segment.length > maxLength) {
+            if (out.length >= budget) {
+              hitBudget = true;
               hasMore = true;
               break;
             }
 
-            parts.push(segment);
-            previewLength += sepLength + segment.length;
+            if (count > 0) out += ", ";
+
+            out += preview(k, depth + 1, budget - out.length);
+            if (hitBudget || out.length >= budget) {
+              hasMore = true;
+              break;
+            }
+
+            if (" => ".length > budget - out.length) {
+              hitBudget = true;
+              hasMore = true;
+              break;
+            }
+            out += " => ";
+            out += preview(v, depth + 1, budget - out.length);
             count += 1;
+
+            if (hitBudget || out.length >= budget) {
+              hasMore = true;
+              break;
+            }
           }
 
-          return `Map(${next.size}) { ${parts.join(", ")}${hasMore ? ", …" : ""} }`;
+          if (hasMore && out.length < budget) out += ", …";
+          if (out.length < budget) out += " }";
+          return fit(out, budget);
         }
 
         if (next instanceof Set) {
-          if (seen.has(next)) return "[Circular]";
-          if (depth >= maxDepth) return `Set(${next.size})`;
+          if (seen.has(next)) return fit("[Circular]", budget);
+          if (depth >= maxDepth) return fit(`Set(${next.size})`, budget);
           seen.add(next);
 
-          const parts: string[] = [];
-          let previewLength = 0;
+          let out = `Set(${next.size}) { `;
           let count = 0;
           let hasMore = false;
           for (const v of next) {
@@ -209,65 +249,71 @@ function safePreviewStringify(
               break;
             }
 
-            const segment = preview(v, depth + 1);
-            const sepLength = parts.length > 0 ? 2 : 0;
-            if (previewLength + sepLength + segment.length > maxLength) {
+            if (out.length >= budget) {
+              hitBudget = true;
               hasMore = true;
               break;
             }
 
-            parts.push(segment);
-            previewLength += sepLength + segment.length;
+            if (count > 0) out += ", ";
+
+            out += preview(v, depth + 1, budget - out.length);
             count += 1;
+
+            if (hitBudget || out.length >= budget) {
+              hasMore = true;
+              break;
+            }
           }
 
-          return `Set(${next.size}) { ${parts.join(", ")}${hasMore ? ", …" : ""} }`;
+          if (hasMore && out.length < budget) out += ", …";
+          if (out.length < budget) out += " }";
+          return fit(out, budget);
         }
 
         if (Array.isArray(next)) {
-          if (seen.has(next)) return "[Circular]";
-          if (depth >= maxDepth) return `Array(${next.length})`;
+          if (seen.has(next)) return fit("[Circular]", budget);
+          if (depth >= maxDepth) return fit(`Array(${next.length})`, budget);
           seen.add(next);
 
-          const parts: string[] = [];
-          let previewLength = 0;
-          let hasMore = false;
+          let out = "[";
           const limit = Math.min(next.length, maxArrayLength);
           for (let i = 0; i < limit; i += 1) {
-            const segment = preview(next[i], depth + 1);
-            const sepLength = parts.length > 0 ? 2 : 0;
-            if (previewLength + sepLength + segment.length > maxLength) {
-              hasMore = true;
+            if (out.length >= budget) {
+              hitBudget = true;
               break;
             }
 
-            parts.push(segment);
-            previewLength += sepLength + segment.length;
+            if (i > 0) out += ", ";
+            out += preview(next[i], depth + 1, budget - out.length);
+
+            if (hitBudget || out.length >= budget) break;
           }
 
-          if (next.length > maxArrayLength) hasMore = true;
-          return `[${parts.join(", ")}${hasMore ? ", …" : ""}]`;
+          const hasMore = hitBudget || next.length > maxArrayLength;
+          if (hasMore && out.length < budget) out += ", …";
+          if (out.length < budget) out += "]";
+          return fit(out, budget);
         }
 
         if (typeof next === "object" && next !== null) {
-          if (seen.has(next)) return "[Circular]";
-          if (depth >= maxDepth) return "{…}";
+          if (seen.has(next)) return fit("[Circular]", budget);
+          if (depth >= maxDepth) return fit("{…}", budget);
           seen.add(next);
 
           if (!isRecord(next)) {
             try {
               const asText = String(next);
-              if (asText !== "[object Object]") return asText;
+              if (asText !== "[object Object]") return fit(asText, budget);
             } catch {
               // fall through
             }
 
             const name = next.constructor?.name;
-            return name ? `[${name}]` : "[Object]";
+            return fit(name ? `[${name}]` : "[Object]", budget);
           }
 
-          const parts: string[] = [];
-          let previewLength = 0;
+          let out = "{ ";
           let count = 0;
           let hasMore = false;
           for (const key in next) {
@@ -277,36 +323,52 @@ function safePreviewStringify(
               break;
             }
 
-            let valuePreview = "[unavailable]";
-            try {
-              valuePreview = preview(next[key], depth + 1);
-            } catch {
-              // keep default
-            }
-
-            const segment = `${formatKey(key)}: ${valuePreview}`;
-            const sepLength = parts.length > 0 ? 2 : 0;
-            if (previewLength + sepLength + segment.length > maxLength) {
+            if (out.length >= budget) {
+              hitBudget = true;
               hasMore = true;
               break;
             }
 
-            parts.push(segment);
-            previewLength += sepLength + segment.length;
+            if (count > 0) out += ", ";
+
+            const keyText = formatKey(key);
+            if (keyText.length + 2 > budget - out.length) {
+              hitBudget = true;
+              hasMore = true;
+              break;
+            }
+
+            out += `${keyText}: `;
+
+            let valuePreview = "[unavailable]";
+            try {
+              valuePreview = preview(next[key], depth + 1, budget - out.length);
+            } catch {
+              // keep default
+            }
+
+            out += valuePreview;
             count += 1;
+
+            if (hitBudget || out.length >= budget) {
+              hasMore = true;
+              break;
+            }
           }
 
-          return `{ ${parts.join(", ")}${hasMore ? ", …" : ""} }`;
+          if (hasMore && out.length < budget) out += ", …";
+          if (out.length < budget) out += " }";
+          return fit(out, budget);
         }
 
-        return "[unserializable]";
+        return fit("[unserializable]", budget);
       }
       default:
-        return "[unserializable]";
+        return fit("[unserializable]", budget);
     }
   };
 
-  return truncate(preview(value, 0));
+  return finalize(preview(value, 0, maxLength));
 }
 
 function safePreview(value: unknown, options?: number | SafePreviewOptions): string {
