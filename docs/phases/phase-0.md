@@ -10,8 +10,8 @@
 
 By the end of Phase 0 you will have:
 
-- A **Next.js + TypeScript** app running under **Bun runtime** in dev mode (not Node). [1](https://reactflow.dev/)[2](https://deepwiki.com/Skyvern-AI/skyvern/7.1-workflow-editor-architecture)
-- **Tambo** installed and wired at least at the Provider level (even if the UI is minimal). [3](https://www.npmjs.com/package/@tambo-ai/react)[4](https://modelcontextprotocol.io/specification/2025-06-18/client/sampling)
+- A **Next.js + TypeScript** app running under **Bun runtime** in dev mode (not Node). [1](https://bun.sh/docs/guides/ecosystem/nextjs)[2](https://bun.sh/docs/runtime/overview)
+- **Tambo** installed and wired at least at the Provider level (even if the UI is minimal). [3](https://github.com/tambo-ai/tambo)[4](https://www.npmjs.com/package/@tambo-ai/react)
 - **Tailwind CSS** configured and a minimal design system baseline with **shadcn/ui + Radix UI**.
 - A consistent set of **engineering conventions**: linting/formatting, typed env loading, and a “phase-ready” docs workflow.
 
@@ -19,8 +19,8 @@ By the end of Phase 0 you will have:
 
 ## 0.2 Architecture (1–2 lines)
 
-- **Runtime:** Bun executes Next.js (`bun --bun`) for development and scripts, providing a fast TS/JS toolchain. [1](https://reactflow.dev/)[2](https://deepwiki.com/Skyvern-AI/skyvern/7.1-workflow-editor-architecture)
-- **Generative UI:** Tambo runs the agent loop; you register UI components with Zod schemas and Tambo renders the resulting UI/tool calls. [3](https://www.npmjs.com/package/@tambo-ai/react)[4](https://modelcontextprotocol.io/specification/2025-06-18/client/sampling)
+- **Runtime:** Bun executes Next.js (`bun --bun`) for development and scripts, providing a fast TS/JS toolchain. [1](https://bun.sh/docs/guides/ecosystem/nextjs)[2](https://bun.sh/docs/runtime/overview)
+- **Generative UI:** Tambo runs the agent loop; you register UI components with Zod schemas and Tambo renders the resulting UI/tool calls. [3](https://github.com/tambo-ai/tambo)[4](https://www.npmjs.com/package/@tambo-ai/react)
 
 ---
 
@@ -28,7 +28,7 @@ By the end of Phase 0 you will have:
 
 1. **Single-user prototype**: no auth, no multi-tenant.
 2. **SQLite upload is session-only and in-memory** (no persistence); implementation begins in Phase 24.
-3. **MCP connections are client-side** (browser → MCP server). This implies CORS and network accessibility are needed for MCP servers. [5](https://modelcontextprotocol.info/docs/)[6](https://github.com/modelcontextprotocol/modelcontextprotocol)
+3. **MCP connections are client-side** (browser → MCP server). This implies CORS and network accessibility are needed for MCP servers. [5](https://modelcontextprotocol.io/docs/)[6](https://github.com/modelcontextprotocol/modelcontextprotocol)
 
 ---
 
@@ -36,7 +36,7 @@ By the end of Phase 0 you will have:
 
 ### A) Ensure Bun runtime is used for Next.js
 
-Bun’s Next.js guide recommends running Next using Bun’s runtime by prefixing scripts with `bun --bun`. [1](https://reactflow.dev/)[2](https://deepwiki.com/Skyvern-AI/skyvern/7.1-workflow-editor-architecture)
+Bun’s Next.js guide recommends running Next using Bun’s runtime by prefixing scripts with `bun --bun`. [1](https://bun.sh/docs/guides/ecosystem/nextjs)[2](https://bun.sh/docs/runtime/overview)
 
 **Tasks:**
 - Initialize Next.js if not already present.
@@ -108,7 +108,7 @@ A minimal Design System Baseline Page demonstrating 3–5 primitives, such as:
 
 ### D) Add Tambo and Verify Provider Wiring
 
-Tambo is a generative UI toolkit for React that manages agent state, streaming, and MCP interactions. [3](https://www.npmjs.com/package/@tambo-ai/react)
+Tambo is a generative UI toolkit for React that manages agent state, streaming, and MCP interactions. [3](https://github.com/tambo-ai/tambo)
 
 **Tasks**
 

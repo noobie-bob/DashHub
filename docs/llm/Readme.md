@@ -5,10 +5,10 @@ This folder contains **LLM control files** that you can feed into Claude/agent r
 The goal is to keep generation deterministic and architecture-consistent while building a **single-user** prototype of a **Generative UI Dashboard** using:
 
 - **Next.js + TypeScript**
-- **Bun** runtime (`bun --bun next dev/build/start`) [1](https://reactflow.dev/)[2](https://deepwiki.com/Skyvern-AI/skyvern/7.1-workflow-editor-architecture)
+- **Bun** runtime (`bun --bun next dev/build/start`) [1](https://bun.sh/docs/guides/ecosystem/nextjs)[2](https://bun.sh/docs/runtime/overview)
 - **Tailwind + shadcn/ui + Radix UI** (app chrome)
-- **Tambo** for generative UI (component registration with Zod → agent tool definitions → Tambo renders & streams props) [3](https://www.npmjs.com/package/@tambo-ai/react)[4](https://modelcontextprotocol.io/specification/2025-06-18/client/sampling)
-- **MCP** (Model Context Protocol) integrations **client-side** (browser → MCP server) [5](https://modelcontextprotocol.info/docs/)[6](https://github.com/modelcontextprotocol/modelcontextprotocol)
+- **Tambo** for generative UI (component registration with Zod → agent tool definitions → Tambo renders & streams props) [3](https://github.com/tambo-ai/tambo)[4](https://www.npmjs.com/package/@tambo-ai/react)
+- **MCP** (Model Context Protocol) integrations **client-side** (browser → MCP server) [5](https://modelcontextprotocol.io/docs/)[6](https://github.com/modelcontextprotocol/modelcontextprotocol)
 
 ---
 

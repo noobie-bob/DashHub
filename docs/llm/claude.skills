@@ -11,18 +11,18 @@ Your job is to generate high-quality code and phase deliverables incrementally.
 
 2) Tambo-first generative UI:
 - Prefer rendering registered components rather than returning long text.
-- Ensure props adhere to Zod schemas; treat schema descriptions as your “UI API”. [1](https://www.npmjs.com/package/@tambo-ai/react)[2](https://modelcontextprotocol.io/specification/2025-06-18/client/sampling)
+- Ensure props adhere to Zod schemas; treat schema descriptions as your “UI API”. [1](https://github.com/tambo-ai/tambo)[2](https://www.npmjs.com/package/@tambo-ai/react)
 
 3) OSS-first:
 - Use established libraries for PDF/OCR/Excel/docx/ERD instead of rolling your own:
-  - PDF.js for PDF extraction. [9](https://www.w3resource.com/sqlite/snippets/sqlite-bun.php)[10](https://blog.openreplay.com/quick-guide-bun-sqlite-setup/)
-  - tesseract.js for OCR. [11](https://nextjs.org/conf/session/nextjs-bun)[12](https://bun.com/docs/guides/ecosystem/nextjs)
-  - SheetJS xlsx for Excel. [13](https://www.timsanteford.com/posts/how-to-ocr-with-tesseract-js-to-unlock-text-from-images/)[14](https://www.xjavascript.com/blog/how-to-extract-text-from-a-pdf-in-javascript/)
-  - mammoth.js for docx. [15](https://tesseract.projectnaptha.com/)[16](https://blog.rasc.ch/2019/07/ocr-with-tesseractjs.html)
-  - React Flow for ERD. [17](https://sql.js.org/)[18](https://sqlite.org/wasm/doc/trunk/demo-123.md)
+  - PDF.js for PDF extraction. [9](https://github.com/mozilla/pdf.js)[10](https://www.npmjs.com/package/pdfjs-dist)
+  - tesseract.js for OCR. [11](https://github.com/naptha/tesseract.js)[12](https://tesseract.projectnaptha.com/)
+  - SheetJS xlsx for Excel. [13](https://github.com/SheetJS/sheetjs)[14](https://docs.sheetjs.com/)
+  - mammoth.js for docx. [15](https://github.com/mwilliamson/mammoth.js)[16](https://www.npmjs.com/package/mammoth)
+  - React Flow for ERD. [17](https://reactflow.dev/)[18](https://github.com/xyflow/xyflow)
 
 4) Bun runtime:
-- Always provide commands that run Next via Bun runtime (`bun --bun next dev/build/start`). [3](https://reactflow.dev/)[4](https://deepwiki.com/Skyvern-AI/skyvern/7.1-workflow-editor-architecture)
+- Always provide commands that run Next via Bun runtime (`bun --bun next dev/build/start`). [3](https://bun.sh/docs/guides/ecosystem/nextjs)[4](https://bun.sh/docs/runtime/overview)
 
 ## Architecture Responsibilities (what you must preserve)
 - Workbench split: Canvas (left) vs Dock (right)
@@ -30,7 +30,7 @@ Your job is to generate high-quality code and phase deliverables incrementally.
 - Event Ledger: append-only provenance trail
 - Widget Instances on Canvas
 - Tools: schema-defined operations; outputs become artifacts/events
-- MCP Manager: client-side config and wiring later. [7](https://modelcontextprotocol.info/docs/)[8](https://github.com/modelcontextprotocol/modelcontextprotocol)
+- MCP Manager: client-side config and wiring later. [7](https://modelcontextprotocol.io/docs/)[8](https://github.com/modelcontextprotocol/modelcontextprotocol)
 
 ## Skill Modules
 
@@ -42,7 +42,7 @@ Your job is to generate high-quality code and phase deliverables incrementally.
 ### Skill: TamboIntegration
 - Wire `TamboProvider` and hooks.
 - Register components with Zod schemas; include rich `.describe()` metadata.
-- Ensure thread rendering is stable and streaming-friendly. [1](https://www.npmjs.com/package/@tambo-ai/react)[2](https://modelcontextprotocol.io/specification/2025-06-18/client/sampling)
+- Ensure thread rendering is stable and streaming-friendly. [1](https://github.com/tambo-ai/tambo)[2](https://www.npmjs.com/package/@tambo-ai/react)
 
 ### Skill: EventLedger
 - Implement `recordEvent(kind, payload, refs)` utility.
@@ -60,13 +60,13 @@ Your job is to generate high-quality code and phase deliverables incrementally.
 - Tools must create events and often artifacts.
 
 ### Skill: MCP (Client-side)
-- Implement MCP server config UX (modal, list) stored in localStorage. [7](https://modelcontextprotocol.info/docs/)
+- Implement MCP server config UX (modal, list) stored in localStorage. [7](https://modelcontextprotocol.io/docs/)
 - Wire `mcpServers` into TamboProvider.
 - Implement user approval UI and provenance for MCP calls.
 - Be mindful of Streamable HTTP transport rules and origin risks. [8](https://github.com/modelcontextprotocol/modelcontextprotocol)
 
 ### Skill: SQLite (Phase 24+)
-- Use sql.js to import user-uploaded sqlite files into an in-memory DB. [5](https://github.com/sqlitebrowser/sqlitebrowser)[6](https://turso.tech/blog/5-best-free-sqlite-gui)
+- Use sql.js to import user-uploaded sqlite files into an in-memory DB. [5](https://sql.js.org/)[6](https://github.com/sql-js/sql.js)
 - Build schema reader and query runner; output SchemaArtifact/QueryResultArtifact.
 - Defer worker/main-thread decision until asked.
 

@@ -61,4 +61,4 @@ You do NOT need to implement all fields in Phase 1. This describes the **target 
 ---
 
 ## Why this model fits Tambo
-Tambo’s model is built around schema-defined components/tools. You register the UI components with Zod schemas and Tambo renders/streams validated props. [3](https://www.npmjs.com/package/@tambo-ai/react)[4](https://modelcontextprotocol.io/specification/2025-06-18/client/sampling)
+Tambo’s model is built around schema-defined components/tools. You register the UI components with Zod schemas and Tambo renders/streams validated props. [3](https://github.com/tambo-ai/tambo)[4](https://www.npmjs.com/package/@tambo-ai/react)

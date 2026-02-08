@@ -7,13 +7,13 @@ It can implement UI, tools, and integration layers while preserving architecture
 Build a Generative UI Dashboard workbench:
 - Left Canvas renders pinned widgets + persistent interactables.
 - Right Dock hosts chat, uploads, DB tools, MCP config & approvals.
-Generative UI is powered by Tambo component registration + tool calls. [1](https://www.npmjs.com/package/@tambo-ai/react)[2](https://modelcontextprotocol.io/specification/2025-06-18/client/sampling)
+Generative UI is powered by Tambo component registration + tool calls. [1](https://github.com/tambo-ai/tambo)[2](https://www.npmjs.com/package/@tambo-ai/react)
 
 ## Constraints
 - Single user only.
 - SQLite upload is session-only, in-memory.
-- MCP is client-side (browser -> MCP server). [7](https://modelcontextprotocol.info/docs/)[8](https://github.com/modelcontextprotocol/modelcontextprotocol)
-- Bun runtime is used to run Next (`bun --bun next ...`). [3](https://reactflow.dev/)[4](https://deepwiki.com/Skyvern-AI/skyvern/7.1-workflow-editor-architecture)
+- MCP is client-side (browser -> MCP server). [7](https://modelcontextprotocol.io/docs/)[8](https://github.com/modelcontextprotocol/modelcontextprotocol)
+- Bun runtime is used to run Next (`bun --bun next ...`). [3](https://bun.sh/docs/guides/ecosystem/nextjs)[4](https://bun.sh/docs/runtime/overview)
 
 ## Agent Workflow (for every phase)
 1) Read `docs/phases/phase-N.md`.
@@ -32,9 +32,9 @@ Generative UI is powered by Tambo component registration + tool calls. [1](https
 ## Capabilities (Skills)
 
 ### 1) RepoBootstrapSkill (Phase 0)
-- Setup Bun scripts for Next (`bun --bun next dev/build/start`). [3](https://reactflow.dev/)[4](https://deepwiki.com/Skyvern-AI/skyvern/7.1-workflow-editor-architecture)
+- Setup Bun scripts for Next (`bun --bun next dev/build/start`). [3](https://bun.sh/docs/guides/ecosystem/nextjs)[4](https://bun.sh/docs/runtime/overview)
 - Setup Tailwind + shadcn/radix baseline.
-- Setup TamboProvider wiring. [1](https://www.npmjs.com/package/@tambo-ai/react)[2](https://modelcontextprotocol.io/specification/2025-06-18/client/sampling)
+- Setup TamboProvider wiring. [1](https://github.com/tambo-ai/tambo)[2](https://www.npmjs.com/package/@tambo-ai/react)
 
 ### 2) WorkbenchSkill (Phases 1–3)
 - Build split-pane workbench layout (Canvas/Dock).
@@ -42,7 +42,7 @@ Generative UI is powered by Tambo component registration + tool calls. [1](https
 - Implement event timeline view.
 
 ### 3) TamboComponentSkill (Phases 4–6)
-- Define Tambo components with Zod props schemas and descriptive metadata. [1](https://www.npmjs.com/package/@tambo-ai/react)[2](https://modelcontextprotocol.io/specification/2025-06-18/client/sampling)
+- Define Tambo components with Zod props schemas and descriptive metadata. [1](https://github.com/tambo-ai/tambo)[2](https://www.npmjs.com/package/@tambo-ai/react)
 - Add one interactable component (TaskBoard).
 - Add local tools callable by the agent (schema-defined).
 
@@ -53,24 +53,24 @@ Generative UI is powered by Tambo component registration + tool calls. [1](https
 ### 5) ArtifactIngestionSkill (Phases 12–20)
 - Implement artifact types and derivation links.
 - Integrate OSS parsers:
-  - PDF.js text extraction. [9](https://www.w3resource.com/sqlite/snippets/sqlite-bun.php)[10](https://blog.openreplay.com/quick-guide-bun-sqlite-setup/)
-  - tesseract.js OCR. [11](https://nextjs.org/conf/session/nextjs-bun)[12](https://bun.com/docs/guides/ecosystem/nextjs)
-  - SheetJS xlsx parsing. [13](https://www.timsanteford.com/posts/how-to-ocr-with-tesseract-js-to-unlock-text-from-images/)[14](https://www.xjavascript.com/blog/how-to-extract-text-from-a-pdf-in-javascript/)
-  - mammoth.js docx extraction. [15](https://tesseract.projectnaptha.com/)[16](https://blog.rasc.ch/2019/07/ocr-with-tesseractjs.html)
+  - PDF.js text extraction. [9](https://github.com/mozilla/pdf.js)[10](https://www.npmjs.com/package/pdfjs-dist)
+  - tesseract.js OCR. [11](https://github.com/naptha/tesseract.js)[12](https://tesseract.projectnaptha.com/)
+  - SheetJS xlsx parsing. [13](https://github.com/SheetJS/sheetjs)[14](https://docs.sheetjs.com/)
+  - mammoth.js docx extraction. [15](https://github.com/mwilliamson/mammoth.js)[16](https://www.npmjs.com/package/mammoth)
 - Create derived artifacts (Text/Dataset) and auto-insight widgets.
 
 ### 6) MCPIntegrationSkill (Phases 21–23)
-- Add client-side MCP server config UI stored in localStorage. [7](https://modelcontextprotocol.info/docs/)
+- Add client-side MCP server config UI stored in localStorage. [7](https://modelcontextprotocol.io/docs/)
 - Wire MCP servers into TamboProvider.
 - Add approval UX and provenance recording.
 - Follow MCP Streamable HTTP transport considerations. [8](https://github.com/modelcontextprotocol/modelcontextprotocol)
 
 ### 7) DatabaseSkill (Phases 24–29)
-- SQLite in-memory via sql.js from uploaded file bytes. [5](https://github.com/sqlitebrowser/sqlitebrowser)[6](https://turso.tech/blog/5-best-free-sqlite-gui)
+- SQLite in-memory via sql.js from uploaded file bytes. [5](https://sql.js.org/)[6](https://github.com/sql-js/sql.js)
 - Build schema extraction -> SchemaArtifact.
 - Build query runner -> QueryResultArtifact.
 - Visualization suggestions -> Graph component.
-- ERD module using React Flow. [17](https://sql.js.org/)[18](https://sqlite.org/wasm/doc/trunk/demo-123.md)
+- ERD module using React Flow. [17](https://reactflow.dev/)[18](https://github.com/xyflow/xyflow)
 
 ### 8) ExplainabilitySkill (Phase 30)
 - Build “Explain this dashboard” overlay using Event Ledger.

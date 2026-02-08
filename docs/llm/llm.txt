@@ -8,16 +8,16 @@ The app is a split-screen workbench:
 Tambo is the generative UI engine:
 - We register React components with Zod prop schemas.
 - These schemas become tool definitions for the LLM agent to call.
-- Tambo streams props and renders the resulting components inside messages. [1](https://www.npmjs.com/package/@tambo-ai/react)[2](https://modelcontextprotocol.io/specification/2025-06-18/client/sampling)
+- Tambo streams props and renders the resulting components inside messages. [1](https://github.com/tambo-ai/tambo)[2](https://www.npmjs.com/package/@tambo-ai/react)
 
 Runtime:
-- Use Bun to run Next.js (dev/build/start executed as `bun --bun next ...`). [3](https://reactflow.dev/)[4](https://deepwiki.com/Skyvern-AI/skyvern/7.1-workflow-editor-architecture)
+- Use Bun to run Next.js (dev/build/start executed as `bun --bun next ...`). [3](https://bun.sh/docs/guides/ecosystem/nextjs)[4](https://bun.sh/docs/runtime/overview)
 
 Scope constraints:
 - Single user only. No auth. No multi-tenant. No team features.
 - Scale/load not considered.
-- SQLite upload is in-memory for the session only (no disk persistence). For this we will use sql.js (SQLite compiled to WASM/JS) when we reach Phase 24+. [5](https://github.com/sqlitebrowser/sqlitebrowser)[6](https://turso.tech/blog/5-best-free-sqlite-gui)
-- MCP is client-side (browser -> MCP server). This requires reachable servers and CORS if cross-origin. [7](https://modelcontextprotocol.info/docs/)[8](https://github.com/modelcontextprotocol/modelcontextprotocol)
+- SQLite upload is in-memory for the session only (no disk persistence). For this we will use sql.js (SQLite compiled to WASM/JS) when we reach Phase 24+. [5](https://sql.js.org/)[6](https://github.com/sql-js/sql.js)
+- MCP is client-side (browser -> MCP server). This requires reachable servers and CORS if cross-origin. [7](https://modelcontextprotocol.io/docs/)[8](https://github.com/modelcontextprotocol/modelcontextprotocol)
 
 Non-goals (until later):
 - Perf optimization, background queues, multi-user permissions, enterprise security hardening.
@@ -68,7 +68,7 @@ The system is built on 5 primitives:
 
 Tambo-specific rule:
 - The AI must ONLY render registered components or call registered tools.
-- Component props must validate against their Zod schema. [1](https://www.npmjs.com/package/@tambo-ai/react)[2](https://modelcontextprotocol.io/specification/2025-06-18/client/sampling)
+- Component props must validate against their Zod schema. [1](https://github.com/tambo-ai/tambo)[2](https://www.npmjs.com/package/@tambo-ai/react)
 
 ------------------------------------------------------------
 C) DATA MODELS (TYPE-FIRST)
@@ -119,7 +119,7 @@ E) MCP RULES (CLIENT-SIDE)
 ------------------------------------------------------------
 
 - MCP server configs are stored client-side (localStorage) and applied at runtime.
-  Reference pattern: “MCP integration system stored in localStorage, configuration UI, runtime wiring into Tambo.” [7](https://modelcontextprotocol.info/docs/)
+  Reference pattern: “MCP integration system stored in localStorage, configuration UI, runtime wiring into Tambo.” [7](https://modelcontextprotocol.io/docs/)
 - MCP transport uses JSON-RPC over Streamable HTTP; origin/security considerations apply. [8](https://github.com/modelcontextprotocol/modelcontextprotocol)
 
 MCP Safety UX (when implemented):
@@ -133,17 +133,17 @@ F) FILE INGESTION (OSS FIRST)
 
 When we reach ingestion phases, use proven OSS libraries:
 
-- PDF text extraction: PDF.js (pdfjs-dist) using getTextContent(). [9](https://www.w3resource.com/sqlite/snippets/sqlite-bun.php)[10](https://blog.openreplay.com/quick-guide-bun-sqlite-setup/)
-- OCR in browser: tesseract.js (prefer worker-based execution). [11](https://nextjs.org/conf/session/nextjs-bun)[12](https://bun.com/docs/guides/ecosystem/nextjs)
-- Excel (.xlsx): SheetJS xlsx read/parse into rows/columns. [13](https://www.timsanteford.com/posts/how-to-ocr-with-tesseract-js-to-unlock-text-from-images/)[14](https://www.xjavascript.com/blog/how-to-extract-text-from-a-pdf-in-javascript/)
-- Word (.docx): mammoth.js extractRawText/convertToHtml. [15](https://tesseract.projectnaptha.com/)[16](https://blog.rasc.ch/2019/07/ocr-with-tesseractjs.html)
+- PDF text extraction: PDF.js (pdfjs-dist) using getTextContent(). [9](https://github.com/mozilla/pdf.js)[10](https://www.npmjs.com/package/pdfjs-dist)
+- OCR in browser: tesseract.js (prefer worker-based execution). [11](https://github.com/naptha/tesseract.js)[12](https://tesseract.projectnaptha.com/)
+- Excel (.xlsx): SheetJS xlsx read/parse into rows/columns. [13](https://github.com/SheetJS/sheetjs)[14](https://docs.sheetjs.com/)
+- Word (.docx): mammoth.js extractRawText/convertToHtml. [15](https://github.com/mwilliamson/mammoth.js)[16](https://www.npmjs.com/package/mammoth)
 
 ------------------------------------------------------------
 G) SQLITE (PHASE 24+)
 ------------------------------------------------------------
 
 - SQLite is loaded from uploaded .sqlite bytes and kept in-memory for the session.
-- Use sql.js to import an existing sqlite file into memory and query it in the browser. [5](https://github.com/sqlitebrowser/sqlitebrowser)[6](https://turso.tech/blog/5-best-free-sqlite-gui)
+- Use sql.js to import an existing sqlite file into memory and query it in the browser. [5](https://sql.js.org/)[6](https://github.com/sql-js/sql.js)
 - Defer the decision of main-thread vs worker execution until after Phase 24.
 
 ------------------------------------------------------------
