@@ -41,15 +41,20 @@ function formatFullDate(ts: number): string {
   return fullDateFormatter.format(new Date(ts));
 }
 
+const DOM_ID_HASH_LENGTH = 12;
+
+// Lightweight, non-cryptographic hash used only for DOM IDs.
 function hashStringForDomId(value: string): string {
   let hash = 5381;
   for (let i = 0; i < value.length; i += 1) {
     hash = ((hash << 5) + hash) ^ value.charCodeAt(i);
   }
 
-  return (hash >>> 0).toString(36).slice(0, 8);
+  return (hash >>> 0).toString(36).slice(0, DOM_ID_HASH_LENGTH);
 }
 
+// Internal DOM id helper for `aria-controls` / details panel wiring.
+// Not intended as a stable external contract.
 function getEventDetailsId(eventId: string): string {
   const normalized = eventId
     .trim()
@@ -123,39 +128,29 @@ function safePreviewStringify(
 
   const { maxLength = 200, maxDepth = 2, maxKeys = 12, maxArrayLength = 12 } = options;
   const seen = new WeakSet<object>();
-  let hitBudget = false;
-
-  const truncate = (text: string) => {
-    if (text.length <= maxLength) return text;
-    return `${text.slice(0, maxLength)}…`;
-  };
-
-  const finalize = (text: string) => {
-    if (!hitBudget) return truncate(text);
-
-    if (text.length >= maxLength) return `${text.slice(0, maxLength)}…`;
-    return `${text}…`;
-  };
 
   const formatKey = (key: string) => {
     if (/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(key)) return key;
     return JSON.stringify(key);
   };
 
-  const fit = (text: string, budget: number) => {
-    if (text.length <= budget) return text;
-    hitBudget = true;
-    return text.slice(0, budget);
+  const SEP = ", ";
+  const MORE = ", …";
+  const MAP_ARROW = " => ";
+  const CLOSE_BRACE = " }";
+  const CLOSE_BRACKET = "]";
+  const KEY_VALUE_SEP = ": ";
+
+  type PreviewResult = { text: string; hitBudget: boolean };
+
+  const fit = (text: string, budget: number): PreviewResult => {
+    if (budget <= 0) return { text: "", hitBudget: true };
+    if (text.length <= budget) return { text, hitBudget: false };
+    return { text: text.slice(0, budget), hitBudget: true };
   };
 
-  const preview = (next: unknown, depth: number, budget: number): string => {
-    if (budget <= 0) {
-      hitBudget = true;
-      return "";
-    }
-
-    if (hitBudget) return "";
-
+  const preview = (next: unknown, depth: number, budget: number): PreviewResult => {
+    if (budget <= 0) return { text: "", hitBudget: true };
     if (next === null) return fit("null", budget);
 
     switch (typeof next) {
@@ -193,6 +188,7 @@ function safePreviewStringify(
           seen.add(next);
 
           let out = `Map(${next.size}) { `;
+          let hitBudget = false;
           let count = 0;
           let hasMore = false;
           for (const [k, v] of next) {
@@ -203,36 +199,49 @@ function safePreviewStringify(
 
             if (out.length >= budget) {
               hitBudget = true;
-              hasMore = true;
               break;
             }
 
-            if (count > 0) out += ", ";
-
-            out += preview(k, depth + 1, budget - out.length);
-            if (hitBudget || out.length >= budget) {
-              hasMore = true;
-              break;
+            if (count > 0) {
+              if (SEP.length > budget - out.length) {
+                hitBudget = true;
+                break;
+              }
+              out += SEP;
             }
 
-            if (" => ".length > budget - out.length) {
+            const keyPreview = preview(k, depth + 1, budget - out.length);
+            out += keyPreview.text;
+            if (keyPreview.hitBudget) {
               hitBudget = true;
-              hasMore = true;
               break;
             }
-            out += " => ";
-            out += preview(v, depth + 1, budget - out.length);
-            count += 1;
 
-            if (hitBudget || out.length >= budget) {
-              hasMore = true;
+            if (MAP_ARROW.length > budget - out.length) {
+              hitBudget = true;
               break;
             }
+            out += MAP_ARROW;
+
+            const valuePreview = preview(v, depth + 1, budget - out.length);
+            out += valuePreview.text;
+            if (valuePreview.hitBudget) {
+              hitBudget = true;
+              break;
+            }
+
+            count += 1;
           }
 
-          if (hasMore && out.length < budget) out += ", …";
-          if (out.length < budget) out += " }";
-          return fit(out, budget);
+          if (hasMore) {
+            if (MORE.length > budget - out.length) hitBudget = true;
+            else out += MORE;
+          }
+
+          if (CLOSE_BRACE.length > budget - out.length) hitBudget = true;
+          else out += CLOSE_BRACE;
+
+          return { text: out, hitBudget };
         }
 
         if (next instanceof Set) {
@@ -241,6 +250,7 @@ function safePreviewStringify(
           seen.add(next);
 
           let out = `Set(${next.size}) { `;
+          let hitBudget = false;
           let count = 0;
           let hasMore = false;
           for (const v of next) {
@@ -251,24 +261,36 @@ function safePreviewStringify(
 
             if (out.length >= budget) {
               hitBudget = true;
-              hasMore = true;
               break;
             }
 
-            if (count > 0) out += ", ";
+            if (count > 0) {
+              if (SEP.length > budget - out.length) {
+                hitBudget = true;
+                break;
+              }
+              out += SEP;
+            }
 
-            out += preview(v, depth + 1, budget - out.length);
+            const valuePreview = preview(v, depth + 1, budget - out.length);
+            out += valuePreview.text;
+            if (valuePreview.hitBudget) {
+              hitBudget = true;
+              break;
+            }
+
             count += 1;
-
-            if (hitBudget || out.length >= budget) {
-              hasMore = true;
-              break;
-            }
           }
 
-          if (hasMore && out.length < budget) out += ", …";
-          if (out.length < budget) out += " }";
-          return fit(out, budget);
+          if (hasMore) {
+            if (MORE.length > budget - out.length) hitBudget = true;
+            else out += MORE;
+          }
+
+          if (CLOSE_BRACE.length > budget - out.length) hitBudget = true;
+          else out += CLOSE_BRACE;
+
+          return { text: out, hitBudget };
         }
 
         if (Array.isArray(next)) {
@@ -277,6 +299,7 @@ function safePreviewStringify(
           seen.add(next);
 
           let out = "[";
+          let hitBudget = false;
           const limit = Math.min(next.length, maxArrayLength);
           for (let i = 0; i < limit; i += 1) {
             if (out.length >= budget) {
@@ -284,16 +307,31 @@ function safePreviewStringify(
               break;
             }
 
-            if (i > 0) out += ", ";
-            out += preview(next[i], depth + 1, budget - out.length);
+            if (i > 0) {
+              if (SEP.length > budget - out.length) {
+                hitBudget = true;
+                break;
+              }
+              out += SEP;
+            }
 
-            if (hitBudget || out.length >= budget) break;
+            const itemPreview = preview(next[i], depth + 1, budget - out.length);
+            out += itemPreview.text;
+            if (itemPreview.hitBudget) {
+              hitBudget = true;
+              break;
+            }
           }
 
-          const hasMore = hitBudget || next.length > maxArrayLength;
-          if (hasMore && out.length < budget) out += ", …";
-          if (out.length < budget) out += "]";
-          return fit(out, budget);
+          if (next.length > maxArrayLength) {
+            if (MORE.length > budget - out.length) hitBudget = true;
+            else out += MORE;
+          }
+
+          if (CLOSE_BRACKET.length > budget - out.length) hitBudget = true;
+          else out += CLOSE_BRACKET;
+
+          return { text: out, hitBudget };
         }
 
         if (typeof next === "object" && next !== null) {
@@ -314,6 +352,7 @@ function safePreviewStringify(
           }
 
           let out = "{ ";
+          let hitBudget = false;
           let count = 0;
           let hasMore = false;
           for (const key in next) {
@@ -325,40 +364,53 @@ function safePreviewStringify(
 
             if (out.length >= budget) {
               hitBudget = true;
-              hasMore = true;
               break;
             }
 
-            if (count > 0) out += ", ";
+            if (count > 0) {
+              if (SEP.length > budget - out.length) {
+                hitBudget = true;
+                break;
+              }
+              out += SEP;
+            }
 
             const keyText = formatKey(key);
-            if (keyText.length + 2 > budget - out.length) {
+            if (keyText.length + KEY_VALUE_SEP.length > budget - out.length) {
               hitBudget = true;
-              hasMore = true;
               break;
             }
 
-            out += `${keyText}: `;
+            out += `${keyText}${KEY_VALUE_SEP}`;
 
-            let valuePreview = "[unavailable]";
+            let valueText = "[unavailable]";
+            let valueHitBudget = false;
             try {
-              valuePreview = preview(next[key], depth + 1, budget - out.length);
+              const valuePreview = preview(next[key], depth + 1, budget - out.length);
+              valueText = valuePreview.text;
+              valueHitBudget = valuePreview.hitBudget;
             } catch {
               // keep default
             }
 
-            out += valuePreview;
-            count += 1;
-
-            if (hitBudget || out.length >= budget) {
-              hasMore = true;
+            out += valueText;
+            if (valueHitBudget) {
+              hitBudget = true;
               break;
             }
+
+            count += 1;
           }
 
-          if (hasMore && out.length < budget) out += ", …";
-          if (out.length < budget) out += " }";
-          return fit(out, budget);
+          if (hasMore) {
+            if (MORE.length > budget - out.length) hitBudget = true;
+            else out += MORE;
+          }
+
+          if (CLOSE_BRACE.length > budget - out.length) hitBudget = true;
+          else out += CLOSE_BRACE;
+
+          return { text: out, hitBudget };
         }
 
         return fit("[unserializable]", budget);
@@ -368,7 +420,9 @@ function safePreviewStringify(
     }
   };
 
-  return finalize(preview(value, 0, maxLength));
+  const result = preview(value, 0, maxLength);
+  const text = result.text.length <= maxLength ? result.text : result.text.slice(0, maxLength);
+  return result.hitBudget ? `${text}…` : text;
 }
 
 function safePreview(value: unknown, options?: number | SafePreviewOptions): string {
