@@ -47,16 +47,17 @@ function hashString(value: string): string {
     hash = ((hash << 5) + hash) ^ value.charCodeAt(i);
   }
 
-  return (hash >>> 0).toString(36);
+  return (hash >>> 0).toString(36).slice(0, 8);
 }
 
 function getEventDetailsId(eventId: string): string {
-  const safe = eventId
+  const normalized = eventId
     .trim()
     .toLowerCase()
     .replace(/[^a-z0-9_-]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 48);
+    .replace(/^-+|-+$/g, "");
+
+  const safe = normalized.length <= 64 ? normalized : normalized.slice(-64);
 
   return `event-details-${safe || "unknown"}-${hashString(eventId)}`;
 }
@@ -133,8 +134,6 @@ function safePreviewStringify(
     return JSON.stringify(key);
   };
 
-  const shouldStop = (currentLength: number) => currentLength >= maxLength;
-
   const preview = (next: unknown, depth: number): string => {
     if (next === null) return "null";
 
@@ -180,13 +179,15 @@ function safePreviewStringify(
               break;
             }
 
-            if (shouldStop(previewLength)) {
+            const segment = `${preview(k, depth + 1)} => ${preview(v, depth + 1)}`;
+            const sepLength = parts.length > 0 ? 2 : 0;
+            if (previewLength + sepLength + segment.length > maxLength) {
               hasMore = true;
               break;
             }
 
-            parts.push(`${preview(k, depth + 1)} => ${preview(v, depth + 1)}`);
-            previewLength += parts[parts.length - 1].length + 2;
+            parts.push(segment);
+            previewLength += sepLength + segment.length;
             count += 1;
           }
 
@@ -208,13 +209,15 @@ function safePreviewStringify(
               break;
             }
 
-            if (shouldStop(previewLength)) {
+            const segment = preview(v, depth + 1);
+            const sepLength = parts.length > 0 ? 2 : 0;
+            if (previewLength + sepLength + segment.length > maxLength) {
               hasMore = true;
               break;
             }
 
-            parts.push(preview(v, depth + 1));
-            previewLength += parts[parts.length - 1].length + 2;
+            parts.push(segment);
+            previewLength += sepLength + segment.length;
             count += 1;
           }
 
@@ -231,12 +234,15 @@ function safePreviewStringify(
           let hasMore = false;
           const limit = Math.min(next.length, maxArrayLength);
           for (let i = 0; i < limit; i += 1) {
-            if (shouldStop(previewLength)) {
+            const segment = preview(next[i], depth + 1);
+            const sepLength = parts.length > 0 ? 2 : 0;
+            if (previewLength + sepLength + segment.length > maxLength) {
               hasMore = true;
               break;
             }
-            parts.push(preview(next[i], depth + 1));
-            previewLength += parts[parts.length - 1].length + 2;
+
+            parts.push(segment);
+            previewLength += sepLength + segment.length;
           }
 
           if (next.length > maxArrayLength) hasMore = true;
@@ -271,11 +277,6 @@ function safePreviewStringify(
               break;
             }
 
-            if (shouldStop(previewLength)) {
-              hasMore = true;
-              break;
-            }
-
             let valuePreview = "[unavailable]";
             try {
               valuePreview = preview(next[key], depth + 1);
@@ -283,8 +284,15 @@ function safePreviewStringify(
               // keep default
             }
 
-            parts.push(`${formatKey(key)}: ${valuePreview}`);
-            previewLength += parts[parts.length - 1].length + 2;
+            const segment = `${formatKey(key)}: ${valuePreview}`;
+            const sepLength = parts.length > 0 ? 2 : 0;
+            if (previewLength + sepLength + segment.length > maxLength) {
+              hasMore = true;
+              break;
+            }
+
+            parts.push(segment);
+            previewLength += sepLength + segment.length;
             count += 1;
           }
 
