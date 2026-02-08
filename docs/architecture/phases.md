@@ -17,7 +17,7 @@ Every phase doc (`docs/phases/phase-N.md`) should include:
 ## Overview (high level)
 
 ### Phase 0 — Project bootstrap
-- Bun + Next scripts, Tailwind + shadcn/radix baseline, Tambo provider wiring. [1](https://reactflow.dev/)[2](https://deepwiki.com/Skyvern-AI/skyvern/7.1-workflow-editor-architecture)[3](https://www.npmjs.com/package/@tambo-ai/react)[4](https://modelcontextprotocol.io/specification/2025-06-18/client/sampling)
+- Bun + Next scripts, Tailwind + shadcn/radix baseline, Tambo provider wiring.
 
 ### Phase 1 — Workbench + minimal Tambo thread
 - Split layout, thread UI in Dock, event ledger begins.
@@ -29,13 +29,13 @@ Every phase doc (`docs/phases/phase-N.md`) should include:
 - Inspectable events, filters, details panel.
 
 ### Phase 4 — Register first Tambo generative widgets
-- SummaryCard, DataTable, Graph with Zod schemas. [3](https://www.npmjs.com/package/@tambo-ai/react)[4](https://modelcontextprotocol.io/specification/2025-06-18/client/sampling)
+- SummaryCard, DataTable, Graph with Zod schemas.
 
 ### Phase 5 — Interactable TaskBoard
-- Persistent task widget updated by ID. [3](https://www.npmjs.com/package/@tambo-ai/react)[4](https://modelcontextprotocol.io/specification/2025-06-18/client/sampling)
+- Persistent task widget updated by ID.
 
 ### Phase 6 — Local tools v0
-- createSection, pinWidget, renameWidget (agent-callable later). [3](https://www.npmjs.com/package/@tambo-ai/react)[4](https://modelcontextprotocol.io/specification/2025-06-18/client/sampling)
+- createSection, pinWidget, renameWidget (agent-callable later).
 
 ### Phase 7 — Local session persistence
 - Serialize minimal session state (events, widgets, templates).
@@ -56,16 +56,16 @@ Every phase doc (`docs/phases/phase-N.md`) should include:
 - Uploads become artifacts; derivation links begin.
 
 ### Phase 13 — PDF ingestion
-- PDF.js extraction → TextArtifact. [9](https://www.w3resource.com/sqlite/snippets/sqlite-bun.php)[10](https://blog.openreplay.com/quick-guide-bun-sqlite-setup/)
+- PDF.js extraction → TextArtifact.
 
 ### Phase 14 — Image OCR
-- Tesseract.js OCR → TextArtifact. [11](https://nextjs.org/conf/session/nextjs-bun)[12](https://bun.com/docs/guides/ecosystem/nextjs)
+- Tesseract.js OCR → TextArtifact.
 
 ### Phase 15 — Excel ingestion
-- SheetJS xlsx → DatasetArtifact. [13](https://www.timsanteford.com/posts/how-to-ocr-with-tesseract-js-to-unlock-text-from-images/)[14](https://www.xjavascript.com/blog/how-to-extract-text-from-a-pdf-in-javascript/)
+- SheetJS xlsx → DatasetArtifact.
 
 ### Phase 16 — docx ingestion
-- Mammoth → Text/HTML artifact. [15](https://tesseract.projectnaptha.com/)[16](https://blog.rasc.ch/2019/07/ocr-with-tesseractjs.html)
+- Mammoth → Text/HTML artifact.
 
 ### Phase 17 — Artifact-scoped Q&A
 - Ask about a selected artifact.
@@ -80,16 +80,16 @@ Every phase doc (`docs/phases/phase-N.md`) should include:
 - Narrative widget from artifacts/insights.
 
 ### Phase 21 — MCP config UI
-- Client-side server config stored in localStorage. [5](https://modelcontextprotocol.info/docs/)
+- Client-side server config stored in localStorage.
 
 ### Phase 22 — MCP wiring into TamboProvider
-- Browser connects to MCP servers; Tambo sees tools/resources. [5](https://modelcontextprotocol.info/docs/)[6](https://github.com/modelcontextprotocol/modelcontextprotocol)[3](https://www.npmjs.com/package/@tambo-ai/react)
+- Browser connects to MCP servers; Tambo sees tools/resources.
 
 ### Phase 23 — MCP approvals + provenance
-- Explicit approval UI; log lineage. [17](https://blog.logrocket.com/getting-started-bun-react/)[18](https://liambx.com/glossary/react-flow)
+- Explicit approval UI; log lineage.
 
 ### Phase 24 — SQLite upload (session-only)
-- sql.js loads uploaded sqlite file into memory. [7](https://github.com/sqlitebrowser/sqlitebrowser)[8](https://turso.tech/blog/5-best-free-sqlite-gui)
+- sql.js loads uploaded sqlite file into memory.
 
 ### Phase 25 — Schema reader
 - SchemaArtifact from SQLite.
@@ -104,7 +104,7 @@ Every phase doc (`docs/phases/phase-N.md`) should include:
 - Suggest charts from query results.
 
 ### Phase 29 — ERD / DB design tool
-- React Flow ERD from schema. [19](https://sql.js.org/)[20](https://sqlite.org/wasm/doc/trunk/demo-123.md)
+- React Flow ERD from schema.
 
 ### Phase 30 — Explain this dashboard
 - Provenance overlay from event ledger and artifact links.
@@ -113,3 +113,19 @@ Every phase doc (`docs/phases/phase-N.md`) should include:
 
 ## Notes
 - SQLite main-thread vs worker is deferred until after Phase 24, as requested.
+
+## References (primary docs)
+- Bun + Next.js: https://bun.com/docs/guides/ecosystem/nextjs
+- Next.js: https://nextjs.org/docs
+- Tailwind CSS: https://tailwindcss.com/docs
+- shadcn/ui: https://ui.shadcn.com/docs
+- Radix UI: https://www.radix-ui.com/primitives/docs/overview/introduction
+- Tambo React package: https://www.npmjs.com/package/@tambo-ai/react
+- Model Context Protocol spec: https://modelcontextprotocol.io/specification
+- PDF.js: https://github.com/mozilla/pdf.js
+- Tesseract.js: https://github.com/naptha/tesseract.js
+- SheetJS (xlsx): https://docs.sheetjs.com/
+- Mammoth (docx): https://github.com/mwilliamson/mammoth.js
+- sql.js: https://sql.js.org/
+- SQLite WASM docs: https://sqlite.org/wasm
+- React Flow: https://reactflow.dev/
