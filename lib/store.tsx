@@ -60,9 +60,10 @@ export function StoreProvider({ children, hasTambo }: { children: ReactNode; has
       const event = createEvent(kind, data, refs);
       setState((prev) => {
         const nextEvents = [...prev.events, event];
+        const nextLength = nextEvents.length;
         return {
           ...prev,
-          events: nextEvents.length > MAX_EVENTS ? nextEvents.slice(nextEvents.length - MAX_EVENTS) : nextEvents,
+          events: nextLength > MAX_EVENTS ? nextEvents.slice(nextLength - MAX_EVENTS) : nextEvents,
         };
       });
       return event;
