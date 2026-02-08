@@ -135,7 +135,7 @@ These are a convenience index. If a phase doc adds/changes an external dependenc
 - React Flow: [React Flow docs](https://reactflow.dev/)
 
 ### Phase → references map (quick lookup)
-> Convenience view only: phase docs (`docs/phases/phase-N.md`) are the source of truth for dependencies.
+> Convenience view only: phase docs (`docs/phases/phase-N.md`) are the source of truth for dependencies and may list additional tools not captured here.
 
 Phases can span multiple tool areas; this map is a non-exhaustive starting point for the primary implementation phases.
 - Phase 0: Bun + Next.js, Next.js, Tailwind CSS, shadcn/ui, Radix UI, Tambo React package
