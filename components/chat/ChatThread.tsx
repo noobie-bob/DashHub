@@ -16,14 +16,16 @@ function getMessageText(content: unknown): string {
       .map((part) => {
         if (typeof part === "string") return part;
         if (part && typeof part === "object" && "text" in part) {
-          return String(part.text);
+          const text = (part as Record<string, unknown>).text;
+          return typeof text === "string" ? text : String(text ?? "");
         }
         return "";
       })
       .join("");
   }
   if (content && typeof content === "object" && "text" in content) {
-    return String((content as { text: string }).text);
+    const text = (content as Record<string, unknown>).text;
+    return typeof text === "string" ? text : String(text ?? "");
   }
   return "";
 }
@@ -33,8 +35,8 @@ export function ChatThread() {
   const { recordEvent } = useStore();
   const scrollRef = useRef<HTMLDivElement>(null);
   const lastThreadIdRef = useRef<string | null>(null);
-  const lastMessageCountRef = useRef(0);
   const seenMessageIdsRef = useRef<Set<string>>(new Set());
+  const pendingAssistantMessageIdsRef = useRef<Set<string>>(new Set());
   const threadId = (thread as { id?: string } | null | undefined)?.id ?? null;
 
   // Auto-scroll to bottom when new messages arrive
@@ -50,12 +52,28 @@ export function ChatThread() {
     const isGenerationSettled =
       generationStage === "IDLE" || generationStage === "COMPLETE" || generationStage === "ERROR";
 
-    if (threadId !== lastThreadIdRef.current || messages.length < lastMessageCountRef.current) {
+    if (threadId !== lastThreadIdRef.current) {
       lastThreadIdRef.current = threadId;
-      lastMessageCountRef.current = messages.length;
       seenMessageIdsRef.current = new Set();
-    } else {
-      lastMessageCountRef.current = messages.length;
+      pendingAssistantMessageIdsRef.current = new Set();
+    }
+
+    if (isGenerationSettled && pendingAssistantMessageIdsRef.current.size > 0) {
+      const messagesById = new Map(messages.map((m) => [m.id, m] as const));
+
+      for (const id of Array.from(pendingAssistantMessageIdsRef.current)) {
+        const msg = messagesById.get(id);
+        if (!msg) {
+          pendingAssistantMessageIdsRef.current.delete(id);
+          continue;
+        }
+
+        const contentText = getMessageText(msg.content);
+        if (!contentText) continue;
+
+        recordEvent("message.received", { outputs: contentText }, { messageIds: [msg.id] });
+        pendingAssistantMessageIdsRef.current.delete(id);
+      }
     }
 
     for (const msg of messages) {
@@ -64,7 +82,11 @@ export function ChatThread() {
       const contentText = getMessageText(msg.content);
       if (!contentText) continue;
 
-      if (msg.role === "assistant" && !isGenerationSettled) continue;
+      if (msg.role === "assistant" && !isGenerationSettled) {
+        pendingAssistantMessageIdsRef.current.add(msg.id);
+        seenMessageIdsRef.current.add(msg.id);
+        continue;
+      }
 
       if (msg.role === "user") {
         recordEvent("message.sent", { inputs: contentText }, { messageIds: [msg.id] });
@@ -73,6 +95,7 @@ export function ChatThread() {
       }
 
       seenMessageIdsRef.current.add(msg.id);
+      pendingAssistantMessageIdsRef.current.delete(msg.id);
     }
   }, [threadId, thread?.messages, generationStage, recordEvent]);
 

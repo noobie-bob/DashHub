@@ -9,6 +9,7 @@ export function Providers({
   children: React.ReactNode;
 }>) {
   const apiKey = process.env.NEXT_PUBLIC_TAMBO_API_KEY;
+  const hasTambo = Boolean(apiKey);
 
   if (!apiKey) {
     if (process.env.NODE_ENV !== "production") {
@@ -18,7 +19,7 @@ export function Providers({
     console.error("Missing NEXT_PUBLIC_TAMBO_API_KEY");
 
     return (
-      <StoreProvider>
+      <StoreProvider hasTambo={hasTambo}>
         <div
           role="alert"
           className="mx-auto my-4 w-fit rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900"
@@ -33,7 +34,7 @@ export function Providers({
 
   return (
     <TamboProvider apiKey={apiKey}>
-      <StoreProvider>{children}</StoreProvider>
+      <StoreProvider hasTambo={hasTambo}>{children}</StoreProvider>
     </TamboProvider>
   );
 }
