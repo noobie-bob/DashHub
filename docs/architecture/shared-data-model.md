@@ -16,6 +16,7 @@ Treat the field names in this document as canonical. Other docs should reference
 - `source: 'userUpload' | 'toolOutput' | 'mcpResult'`
 - `payload`: type-specific (keep large data in memory)
 - `derivedFrom?: string[]` (artifact IDs)
+- `meta?: Record<string, unknown>`
 - `relationships?: Record<string, string[]>`
 
 ### Artifact types introduced gradually

@@ -90,6 +90,7 @@ Artifact (minimum):
 - payload: (type-specific, keep minimal; for large data store in memory, not localStorage)
 - derivedFrom?: string[]
 - meta?: Record<string, unknown>
+- relationships?: Record<string, string[]>
 
 EventRecord (minimum):
 - id: string
