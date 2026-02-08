@@ -1,0 +1,180 @@
+# LLM Instructions — Generative UI Dashboard (Next.js + Bun + Tambo + MCP)
+
+You are an engineering agent building a single-user prototype of a "Generative UI Dashboard".
+The app is a split-screen workbench:
+- Left: Canvas (persistent, pinned widgets + interactable components)
+- Right: Dock (chat, uploads, DB, MCP config, approvals)
+
+Tambo is the generative UI engine:
+- We register React components with Zod prop schemas.
+- These schemas become tool definitions for the LLM agent to call.
+- Tambo streams props and renders the resulting components inside messages. [1](https://www.npmjs.com/package/@tambo-ai/react)[2](https://modelcontextprotocol.io/specification/2025-06-18/client/sampling)
+
+Runtime:
+- Use Bun to run Next.js (dev/build/start executed as `bun --bun next ...`). [3](https://reactflow.dev/)[4](https://deepwiki.com/Skyvern-AI/skyvern/7.1-workflow-editor-architecture)
+
+Scope constraints:
+- Single user only. No auth. No multi-tenant. No team features.
+- Scale/load not considered.
+- SQLite upload is in-memory for the session only (no disk persistence). For this we will use sql.js (SQLite compiled to WASM/JS) when we reach Phase 24+. [5](https://github.com/sqlitebrowser/sqlitebrowser)[6](https://turso.tech/blog/5-best-free-sqlite-gui)
+- MCP is client-side (browser -> MCP server). This requires reachable servers and CORS if cross-origin. [7](https://modelcontextprotocol.info/docs/)[8](https://github.com/modelcontextprotocol/modelcontextprotocol)
+
+Non-goals (until later):
+- Perf optimization, background queues, multi-user permissions, enterprise security hardening.
+
+------------------------------------------------------------
+A) PHASE-BASED DEVELOPMENT PROTOCOL (MANDATORY)
+------------------------------------------------------------
+
+We develop strictly one phase at a time. Each phase must:
+1) Introduce exactly ONE primary capability (may include small supporting refactors).
+2) Update docs/phases/phase-N.md acceptance checklist if needed.
+3) Add minimal tests or smoke checks where appropriate.
+4) Maintain type-safety and keep the build green.
+5) Ensure observable behavior is recorded into the Event Ledger (events[]).
+
+Definition of Done for a phase:
+- A human can demo the phase using the acceptance checklist.
+- No TypeScript errors; lint passes.
+- The phase’s core capability is visible in the UI.
+- Any new state transitions produce Event Ledger entries.
+
+------------------------------------------------------------
+B) CORE ARCHITECTURE (DO NOT BREAK)
+------------------------------------------------------------
+
+The system is built on 5 primitives:
+
+1) Workbench UI
+- CanvasPanel (left): shows pinned widgets + interactable components.
+- DockPanel (right): chat thread + input + controls.
+
+2) Artifact Store (session memory)
+- Everything the user uploads or the system produces becomes an Artifact.
+- Artifacts are referenced by ID by widgets, tools, and events.
+
+3) Event/Provenance Ledger (append-only)
+- Every meaningful action creates an EventRecord entry.
+- This powers debugging and the final “Explain this dashboard” feature.
+
+4) Widgets / Canvas Instances
+- Canvas renders WidgetInstances, not raw messages.
+- Messages can render components (Tambo), but pinning converts them into Widgets.
+
+5) Tools
+- Tools are schema-defined operations callable by the agent.
+- Tools always return structured outputs and must be recorded in the Event Ledger.
+- Some tools may be “local tools” (browser/server helpers) and later MCP tools.
+
+Tambo-specific rule:
+- The AI must ONLY render registered components or call registered tools.
+- Component props must validate against their Zod schema. [1](https://www.npmjs.com/package/@tambo-ai/react)[2](https://modelcontextprotocol.io/specification/2025-06-18/client/sampling)
+
+------------------------------------------------------------
+C) DATA MODELS (TYPE-FIRST)
+------------------------------------------------------------
+
+Use TypeScript types/interfaces and Zod where appropriate.
+
+Artifact (minimum):
+- artifactId: string
+- type: 'file' | 'text' | 'dataset' | 'image' | 'db' | 'schema' | 'queryResult' | ...
+- title: string
+- createdAt: number
+- source: 'userUpload' | 'toolOutput' | 'mcpResult'
+- payload: (type-specific, keep minimal; for large data store in memory, not localStorage)
+- derivedFrom?: artifactId[]
+- meta?: Record<string, unknown>
+
+EventRecord (minimum):
+- eventId: string
+- ts: number
+- kind: string (e.g., 'message.sent', 'artifact.created', 'tool.called', 'pin.created')
+- refs?: { artifactIds?: string[]; widgetIds?: string[]; messageIds?: string[]; mcpServerId?: string }
+- inputs?: unknown
+- outputs?: unknown
+
+WidgetInstance (minimum):
+- widgetId: string
+- componentName: string (registered Tambo component name OR internal canvas widget type)
+- mode: 'generative' | 'interactable'
+- props: unknown (validated by Zod schema if Tambo component)
+- boundArtifacts?: string[]
+- layout?: { x?: number; y?: number; w?: number; h?: number; sectionId?: string }
+
+------------------------------------------------------------
+D) UI STACK RULES (Tailwind + shadcn/ui + Radix)
+------------------------------------------------------------
+
+- Use Tailwind for layout/spacing/typography.
+- Use shadcn/ui + Radix primitives for app chrome: dialogs, tabs, toasts, dropdowns.
+- Use Tambo-registered components for the generative widgets the AI renders.
+
+Avoid:
+- Building custom UI primitives when shadcn/radix already exists.
+- Complex global state frameworks unless needed; keep state minimal and explicit.
+
+------------------------------------------------------------
+E) MCP RULES (CLIENT-SIDE)
+------------------------------------------------------------
+
+- MCP server configs are stored client-side (localStorage) and applied at runtime.
+  Reference pattern: “MCP integration system stored in localStorage, configuration UI, runtime wiring into Tambo.” [7](https://modelcontextprotocol.info/docs/)
+- MCP transport uses JSON-RPC over Streamable HTTP; origin/security considerations apply. [8](https://github.com/modelcontextprotocol/modelcontextprotocol)
+
+MCP Safety UX (when implemented):
+- Any MCP tool call must require explicit user approval.
+- Record provenance: server name/url, tool name, inputs, outputs.
+- Make “who asked for what” visible in the timeline.
+
+------------------------------------------------------------
+F) FILE INGESTION (OSS FIRST)
+------------------------------------------------------------
+
+When we reach ingestion phases, use proven OSS libraries:
+
+- PDF text extraction: PDF.js (pdfjs-dist) using getTextContent(). [9](https://www.w3resource.com/sqlite/snippets/sqlite-bun.php)[10](https://blog.openreplay.com/quick-guide-bun-sqlite-setup/)
+- OCR in browser: tesseract.js (prefer worker-based execution). [11](https://nextjs.org/conf/session/nextjs-bun)[12](https://bun.com/docs/guides/ecosystem/nextjs)
+- Excel (.xlsx): SheetJS xlsx read/parse into rows/columns. [13](https://www.timsanteford.com/posts/how-to-ocr-with-tesseract-js-to-unlock-text-from-images/)[14](https://www.xjavascript.com/blog/how-to-extract-text-from-a-pdf-in-javascript/)
+- Word (.docx): mammoth.js extractRawText/convertToHtml. [15](https://tesseract.projectnaptha.com/)[16](https://blog.rasc.ch/2019/07/ocr-with-tesseractjs.html)
+
+------------------------------------------------------------
+G) SQLITE (PHASE 24+)
+------------------------------------------------------------
+
+- SQLite is loaded from uploaded .sqlite bytes and kept in-memory for the session.
+- Use sql.js to import an existing sqlite file into memory and query it in the browser. [5](https://github.com/sqlitebrowser/sqlitebrowser)[6](https://turso.tech/blog/5-best-free-sqlite-gui)
+- Defer the decision of main-thread vs worker execution until after Phase 24.
+
+------------------------------------------------------------
+H) CODING STANDARDS
+------------------------------------------------------------
+
+- TypeScript strictness: prefer explicit types for public APIs.
+- Every new module must have a single responsibility.
+- Avoid tight coupling between Canvas and Dock.
+- All side effects (tool calls, artifact creation, pinning) must emit an EventRecord.
+- Use stable IDs (uuid/nanoid) for artifacts/events/widgets.
+- Keep localStorage persistence versioned (schemaVersion) to avoid breaking reload.
+
+------------------------------------------------------------
+I) TESTING / SMOKE CHECKS
+------------------------------------------------------------
+
+At minimum per phase:
+- Manual acceptance checklist steps must be included in phase docs.
+- Add a few “test prompts” for chat-based verification.
+- Keep a simple dev “debug panel” optional for printing current session state.
+
+------------------------------------------------------------
+J) OUTPUT FORMAT WHEN ASKED TO GENERATE CODE
+------------------------------------------------------------
+
+When asked to implement a phase:
+1) Summarize the phase objective and acceptance checklist.
+2) List files you will add/update.
+3) Implement minimal code required.
+4) Provide local run commands (bun).
+5) Provide sanity-check instructions + test prompts.
+
+Do not invent features outside the current phase.
