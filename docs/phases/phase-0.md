@@ -18,12 +18,14 @@ By the end of Phase 0 you will have:
 ---
 
 ## 0.2 Architecture (1–2 lines)
+
 - **Runtime:** Bun executes Next.js (`bun --bun`) for development and scripts.
 - **Generative UI:** Tambo runs the agent loop; you register UI components and tools with schemas and Tambo renders the results.
 
 ---
 
 ## 0.3 Key Decisions (record these now)
+
 These decisions are tracked in `docs/architecture/decisions.md`:
 
 1. [DEC-0001 — Single-user prototype](../architecture/decisions.md#dec-0001--single-user-prototype)
@@ -44,22 +46,26 @@ These decisions are tracked in `docs/architecture/decisions.md`:
 Bun’s Next.js guide recommends running Next using Bun’s runtime by prefixing scripts with `bun --bun`.
 
 **Tasks:**
+
 - Initialize Next.js if not already present.
 - Set package scripts to run Next via Bun runtime.
 
 **Commands (choose one path):**
 
-1) If the repo is empty (no Next app yet):
+1. If the repo is empty (no Next app yet):
+
 ```bash
 bun create next-app@latest .
 ```
 
 Recommended options:
+
 - TypeScript: yes
 - ESLint: yes
 - Tailwind: yes
 
-2) If a Next.js app already exists:
+2. If a Next.js app already exists:
+
 ```bash
 bun install
 ```
@@ -80,6 +86,7 @@ Update `package.json` scripts:
 This guarantees Bun executes the Next.js CLI.
 
 **Verify:**
+
 ```bash
 bun --version
 bun install
@@ -91,12 +98,18 @@ bun dev
 ### B) Install and Baseline Tailwind CSS
 
 If you used `bun create next-app@latest .` and selected Tailwind, Tailwind should already be configured.
-
+or
 If you need to add Tailwind to an existing Next.js app:
+ref: https://tailwindcss.com/docs/installation/tailwind-cli
 
 ```bash
 bun add -d tailwindcss postcss autoprefixer
-bunx tailwindcss init -p
+```
+
+Add this in `app/globals.css`:
+
+```css
+@import "tailwindcss";
 ```
 
 Ensure your global CSS includes the Tailwind directives (typically in `app/globals.css` or `src/app/globals.css`):
@@ -155,6 +168,7 @@ bunx shadcn@latest init
 ---
 
 ### D) Add Tambo and Verify Provider Wiring
+
 Tambo is a generative UI toolkit for React that manages agent state, streaming, and MCP interactions.
 
 **Tasks**
@@ -171,7 +185,7 @@ Tambo is a generative UI toolkit for React that manages agent state, streaming, 
 **Commands:**
 
 ```bash
-bun add @tambo-ai/react zod
+bun add  @tambo-ai/react
 ```
 
 **Outcome:** Messages render and flow through Tambo, even without custom component registration.
