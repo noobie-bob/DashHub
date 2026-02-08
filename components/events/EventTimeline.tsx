@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDownLeft, ArrowUpRight, Clock, MessageSquare, Box } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Box, ChevronRight, Clock, MessageSquare } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { EventRecord } from "../../lib/events";
 import { useStore } from "../../lib/store";
@@ -114,6 +114,11 @@ function EventItem({
             {preview}
           </p>
         )}
+      </div>
+      <div className="mt-0.5 shrink-0 text-muted-foreground">
+        <ChevronRight
+          className={`h-4 w-4 transition-transform ${isSelected ? "rotate-90" : ""}`}
+        />
       </div>
     </button>
   );
