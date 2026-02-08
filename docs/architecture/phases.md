@@ -129,3 +129,10 @@ Every phase doc (`docs/phases/phase-N.md`) should include:
 - sql.js: https://sql.js.org/
 - SQLite WASM docs: https://sqlite.org/wasm
 - React Flow: https://reactflow.dev/
+
+### Phase → references map (quick lookup)
+- Phase 0: Bun + Next.js, Next.js, Tailwind CSS, shadcn/ui, Radix UI, Tambo React package
+- Phases 4–6: Tambo React package
+- Phases 13–16: PDF.js, Tesseract.js, SheetJS (xlsx), Mammoth (docx)
+- Phases 21–23: Model Context Protocol spec
+- Phases 24–29: sql.js, SQLite WASM docs, React Flow
