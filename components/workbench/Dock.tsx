@@ -9,12 +9,10 @@ import { MessageSquare, FileBox, Server, Database, Clock } from "lucide-react";
 import { useStore, DOCK_TABS, type DockTab } from "@/lib/store";
 
 export function Dock() {
-  const { state, setActiveDockTab } = useStore();
-  const apiKey = process.env.NEXT_PUBLIC_TAMBO_API_KEY;
-  const hasTambo = Boolean(apiKey);
-  const activeDockTab: DockTab = !hasTambo && state.ui.activeDockTab === "chat" ? "events" : state.ui.activeDockTab;
+  const { state, setActiveDockTab, hasTambo } = useStore();
+  const activeDockTab: DockTab = state.ui.activeDockTab;
 
-  const isDockTab = (tab: string): tab is DockTab => (DOCK_TABS as readonly string[]).includes(tab);
+  const isDockTab = (tab: string): tab is DockTab => DOCK_TABS.includes(tab as DockTab);
 
   return (
     <div className="flex h-full flex-col bg-background">

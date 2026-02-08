@@ -28,6 +28,7 @@ export interface SessionState {
 // Store Context Type
 interface StoreContextType {
   state: SessionState;
+  hasTambo: boolean;
   recordEvent: (kind: EventKind, data: { inputs?: unknown; outputs?: unknown }, refs?: EventRefs) => EventRecord;
   setActiveDockTab: (tab: UIState["activeDockTab"]) => void;
   setDockWidth: (width: number) => void;
@@ -66,12 +67,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     []
   );
 
-  const setActiveDockTab = useCallback((tab: UIState["activeDockTab"]) => {
-    setState((prev) => ({
-      ...prev,
-      ui: { ...prev.ui, activeDockTab: tab },
-    }));
-  }, []);
+  const setActiveDockTab = useCallback(
+    (tab: UIState["activeDockTab"]) => {
+      const nextTab = !hasTambo && tab === "chat" ? "events" : tab;
+
+      setState((prev) => ({
+        ...prev,
+        ui: { ...prev.ui, activeDockTab: nextTab },
+      }));
+    },
+    [hasTambo]
+  );
 
   const setDockWidth = useCallback((width: number) => {
     setState((prev) => ({
@@ -81,7 +87,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <StoreContext.Provider value={{ state, recordEvent, setActiveDockTab, setDockWidth }}>
+    <StoreContext.Provider value={{ state, hasTambo, recordEvent, setActiveDockTab, setDockWidth }}>
       {children}
     </StoreContext.Provider>
   );
