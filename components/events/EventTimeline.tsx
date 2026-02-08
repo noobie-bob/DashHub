@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowDownLeft, ArrowUpRight, ChevronRight, Clock, MessageSquare } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { EventRecord } from "../../lib/events";
 import { useStore } from "../../lib/store";
 
@@ -90,7 +90,7 @@ export function EventTimeline() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const events = state.events;
-  const reversedEvents = [...events].reverse(); // Show newest first
+  const reversedEvents = useMemo(() => [...events].reverse(), [events]); // Show newest first
 
   return (
     <div className="h-full flex flex-col">
