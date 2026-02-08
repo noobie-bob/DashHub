@@ -16,7 +16,7 @@ Every phase doc (`docs/phases/phase-N.md`) should include:
 
 ## Overview (high level)
 
-See **References (primary docs)** and **Phase → references map** at the bottom for the underlying tool/library docs.
+See **References (primary docs)** and **Phase → references map** at the bottom for the underlying tool/library docs. This overview is intentionally link-light.
 
 ### Phase 0 — Project bootstrap
 - Bun + Next scripts, Tailwind + shadcn/radix baseline, Tambo provider wiring.
@@ -134,7 +134,7 @@ See **References (primary docs)** and **Phase → references map** at the bottom
 - React Flow: https://reactflow.dev/
 
 ### Phase → references map (quick lookup)
-Phases can span multiple tool areas; use this as a starting point and cross-reference as needed.
+Phases can span multiple tool areas; this map is a non-exhaustive starting point for the primary implementation phases.
 - Phase 0: Bun + Next.js, Next.js, Tailwind CSS, shadcn/ui, Radix UI, Tambo React package
 - Phases 4–6 (Tambo widgets + local tools): Tambo React package
 - Phases 13–16 (ingestion tooling): PDF.js, Tesseract.js, SheetJS (xlsx), Mammoth (docx)
