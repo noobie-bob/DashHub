@@ -32,7 +32,10 @@ export function ChatThread() {
   const { thread, generationStage } = useTamboThread();
   const { recordEvent } = useStore();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const lastThreadIdRef = useRef<string | null>(null);
   const lastMessageCountRef = useRef(0);
+  const seenMessageIdsRef = useRef<Set<string>>(new Set());
+  const threadId = (thread as { id?: string } | null | undefined)?.id ?? null;
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -44,20 +47,34 @@ export function ChatThread() {
   // Record events when messages change
   useEffect(() => {
     const messages = thread?.messages || [];
-    if (messages.length > lastMessageCountRef.current) {
-      // New messages were added
-      for (let i = lastMessageCountRef.current; i < messages.length; i++) {
-        const msg = messages[i];
-        const contentText = getMessageText(msg.content);
-        if (msg.role === "user") {
-          recordEvent("message.sent", { inputs: contentText }, { messageIds: [msg.id] });
-        } else if (msg.role === "assistant") {
-          recordEvent("message.received", { outputs: contentText }, { messageIds: [msg.id] });
-        }
-      }
+    const isGenerationSettled =
+      generationStage === "IDLE" || generationStage === "COMPLETE" || generationStage === "ERROR";
+
+    if (threadId !== lastThreadIdRef.current || messages.length < lastMessageCountRef.current) {
+      lastThreadIdRef.current = threadId;
+      lastMessageCountRef.current = messages.length;
+      seenMessageIdsRef.current = new Set();
+    } else {
       lastMessageCountRef.current = messages.length;
     }
-  }, [thread?.messages, recordEvent]);
+
+    for (const msg of messages) {
+      if (seenMessageIdsRef.current.has(msg.id)) continue;
+
+      const contentText = getMessageText(msg.content);
+      if (!contentText) continue;
+
+      if (msg.role === "assistant" && !isGenerationSettled) continue;
+
+      if (msg.role === "user") {
+        recordEvent("message.sent", { inputs: contentText }, { messageIds: [msg.id] });
+      } else if (msg.role === "assistant") {
+        recordEvent("message.received", { outputs: contentText }, { messageIds: [msg.id] });
+      }
+
+      seenMessageIdsRef.current.add(msg.id);
+    }
+  }, [threadId, thread?.messages, generationStage, recordEvent]);
 
   const messages = thread?.messages || [];
   const isGenerating = generationStage !== "IDLE" && generationStage !== "COMPLETE" && generationStage !== "ERROR";
