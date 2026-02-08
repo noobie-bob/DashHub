@@ -75,10 +75,10 @@ Update `package.json` scripts:
 ```json
 {
   "scripts": {
-    "dev": "bun --bun next dev",
-    "build": "bun --bun next build",
-    "start": "bun --bun next start",
-    "lint": "next lint"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint"
   }
 }
 ```
@@ -144,7 +144,7 @@ bunx shadcn@latest init
 Then add a couple of components to prove the baseline works:
 
 ```bash
-bunx shadcn@latest add button input dialog tabs toast
+bunx shadcn@latest add button input dialog tabs sonner
 ```
 
 **Deliverable**
@@ -155,7 +155,7 @@ A minimal Design System Baseline Page demonstrating 3–5 primitives, such as:
 - Input
 - Dialog
 - Tabs
-- Toast
+- Sonner (Toast)
 
 Initialize shadcn/ui using its docs: [ui.shadcn.com/docs/installation/next](https://ui.shadcn.com/docs/installation/next)
 
@@ -176,7 +176,9 @@ Tambo is a generative UI toolkit for React that manages agent state, streaming, 
 - Install `@tambo-ai/react`:
 
   ```bash
-  bun add @tambo-ai/react zod
+  bun add @tambo-ai/react
+
+  bunx tambo init
   ```
 
 - Mount `TamboProvider` at the application root
