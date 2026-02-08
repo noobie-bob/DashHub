@@ -14,6 +14,7 @@ export function Providers({
       throw new Error("Missing NEXT_PUBLIC_TAMBO_API_KEY");
     }
 
+    console.error("Missing NEXT_PUBLIC_TAMBO_API_KEY");
     return <>{children}</>;
   }
 
