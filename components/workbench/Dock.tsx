@@ -1,5 +1,6 @@
 "use client";
 
+import { TamboThreadInputProvider, TamboThreadProvider } from "@tambo-ai/react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { ChatThread } from "../chat/ChatThread";
 import { ChatComposer } from "../chat/ChatComposer";
@@ -7,13 +8,20 @@ import { EventTimeline } from "../events/EventTimeline";
 import { MessageSquare, FileBox, Server, Database, Clock } from "lucide-react";
 
 export function Dock() {
+  const apiKey = process.env.NEXT_PUBLIC_TAMBO_API_KEY;
+  const hasTambo = Boolean(apiKey);
+
   return (
     <div className="flex h-full flex-col bg-background">
-      <Tabs id="dock-tabs" defaultValue="chat" className="flex h-full flex-col">
+      <Tabs
+        id="dock-tabs"
+        defaultValue={hasTambo ? "chat" : "events"}
+        className="flex h-full flex-col"
+      >
         {/* Tab List */}
         <div className="shrink-0 border-b border-border px-2">
           <TabsList variant="line" className="h-10">
-            <TabsTrigger value="chat" className="gap-1.5">
+            <TabsTrigger value="chat" className="gap-1.5" disabled={!hasTambo}>
               <MessageSquare className="h-3.5 w-3.5" />
               <span className="text-xs">Chat</span>
             </TabsTrigger>
@@ -38,12 +46,22 @@ export function Dock() {
 
         {/* Chat Tab */}
         <TabsContent value="chat" className="flex flex-1 flex-col m-0 overflow-hidden">
-          <div className="flex-1 overflow-auto">
-            <ChatThread />
-          </div>
-          <div className="shrink-0 border-t border-border p-3">
-            <ChatComposer />
-          </div>
+          {hasTambo ? (
+            <TamboThreadProvider>
+              <TamboThreadInputProvider>
+                <div className="flex-1 overflow-auto">
+                  <ChatThread />
+                </div>
+                <div className="shrink-0 border-t border-border p-3">
+                  <ChatComposer />
+                </div>
+              </TamboThreadInputProvider>
+            </TamboThreadProvider>
+          ) : (
+            <div className="flex h-full items-center justify-center px-6 text-center text-sm text-muted-foreground">
+              Chat is disabled (missing <code className="font-mono">NEXT_PUBLIC_TAMBO_API_KEY</code>).
+            </div>
+          )}
         </TabsContent>
 
         {/* Events Tab */}
