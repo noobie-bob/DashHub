@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDownLeft, ArrowUpRight, ChevronRight, Clock, MessageSquare, Box } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Clock, MessageSquare, Box } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { EventRecord } from "../../lib/events";
 import { useStore } from "../../lib/store";
@@ -37,6 +37,25 @@ function formatFullDate(ts: number): string {
   });
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function safePreviewStringify(value: unknown, maxLength = 200): string {
+  try {
+    const serialized = JSON.stringify(value);
+    if (!serialized) return "";
+
+    if (serialized.length > maxLength) {
+      return `${serialized.slice(0, maxLength)}…`;
+    }
+
+    return serialized;
+  } catch {
+    return "[unserializable]";
+  }
+}
+
 function getEventPreview(event: EventRecord): string {
   if (event.kind === "message.sent" && typeof event.inputs === "string") {
     return event.inputs;
@@ -44,14 +63,19 @@ function getEventPreview(event: EventRecord): string {
   if (event.kind === "message.received" && typeof event.outputs === "string") {
     return event.outputs;
   }
-  if (event.kind === "artifact.created" && typeof event.outputs === "object" && event.outputs !== null) {
-     // @ts-ignore - we know it might have a title
-    return (event.outputs as { title?: string }).title || "Artifact Created";
+
+  if (event.kind === "artifact.created" && isRecord(event.outputs)) {
+    const title = event.outputs["title"];
+    if (typeof title === "string" && title.trim()) return title;
+    return "Artifact Created";
   }
-  
+
+  if (typeof event.inputs === "string") return event.inputs;
+  if (typeof event.outputs === "string") return event.outputs;
+
   // Fallback for objects
-  if (event.inputs && typeof event.inputs === "object") return JSON.stringify(event.inputs); 
-  if (event.outputs && typeof event.outputs === "object") return JSON.stringify(event.outputs);
+  if (isRecord(event.inputs)) return safePreviewStringify(event.inputs);
+  if (isRecord(event.outputs)) return safePreviewStringify(event.outputs);
 
   return "";
 }
