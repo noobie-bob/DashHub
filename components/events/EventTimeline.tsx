@@ -37,6 +37,10 @@ function formatFullDate(ts: number): string {
   });
 }
 
+function getEventDetailsId(eventId: string): string {
+  return `event-details-${encodeURIComponent(eventId)}`;
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   if (typeof value !== "object" || value === null || Array.isArray(value)) return false;
 
@@ -44,41 +48,73 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return proto === Object.prototype || proto === null;
 }
 
-function safePreviewStringify(value: unknown, maxLength = 200): string {
+function safeStringify(value: unknown, { indent = 0 }: { indent?: number } = {}): string {
   try {
-    const serialized = JSON.stringify(value);
-    if (serialized === undefined) return "[unserializable]";
+    const seen = new WeakSet<object>();
+    const serialized = JSON.stringify(
+      value,
+      (_key, v) => {
+        if (typeof v === "bigint") return `${v.toString()}n`;
+        if (v instanceof Error) return { name: v.name, message: v.message };
+        if (v instanceof Map) return { "[Map]": Array.from(v.entries()) };
+        if (v instanceof Set) return { "[Set]": Array.from(v.values()) };
+        if (v instanceof Date) return v.toISOString();
 
-    if (serialized.length > maxLength) {
-      return `${serialized.slice(0, maxLength)}…`;
-    }
+        if (typeof v === "object" && v !== null) {
+          if (seen.has(v)) return "[Circular]";
+          seen.add(v);
+        }
 
-    return serialized;
+        return v;
+      },
+      indent
+    );
+
+    return serialized ?? "[unserializable]";
   } catch {
     return "[unserializable]";
   }
 }
 
-function getEventPreview(event: EventRecord): string {
-  if (event.kind === "message.sent" && typeof event.inputs === "string") {
-    return event.inputs;
-  }
-  if (event.kind === "message.received" && typeof event.outputs === "string") {
-    return event.outputs;
+function safePreview(value: unknown, maxLength = 200): string {
+  if (typeof value === "string") {
+    return value.length > maxLength ? `${value.slice(0, maxLength)}…` : value;
   }
 
+  if (typeof value === "number" || typeof value === "boolean" || value == null) {
+    return String(value);
+  }
+
+  if (typeof value === "bigint") return `${value.toString()}n`;
+  if (typeof value === "symbol") return value.toString();
+  if (typeof value === "function") return value.name ? `[Function: ${value.name}]` : "[Function]";
+
+  if (value instanceof Error) return `${value.name}: ${value.message}`;
+  if (value instanceof Date) return value.toISOString();
+  if (value instanceof Map) return `Map(${value.size})`;
+  if (value instanceof Set) return `Set(${value.size})`;
+  if (value instanceof RegExp) return value.toString();
+
+  const serialized = safeStringify(value);
+  return serialized.length > maxLength ? `${serialized.slice(0, maxLength)}…` : serialized;
+}
+
+function getEventPreview(event: EventRecord): string {
   if (event.kind === "artifact.created" && isRecord(event.outputs)) {
     const title = event.outputs["title"];
     if (typeof title === "string" && title.trim()) return title;
     return "Artifact Created";
   }
 
-  if (typeof event.inputs === "string") return event.inputs;
-  if (typeof event.outputs === "string") return event.outputs;
+  if (event.kind === "message.sent" && event.inputs !== undefined && event.inputs !== null) {
+    return safePreview(event.inputs);
+  }
+  if (event.kind === "message.received" && event.outputs !== undefined && event.outputs !== null) {
+    return safePreview(event.outputs);
+  }
 
-  // Fallback for objects
-  if (isRecord(event.inputs)) return safePreviewStringify(event.inputs);
-  if (isRecord(event.outputs)) return safePreviewStringify(event.outputs);
+  if (event.inputs !== undefined && event.inputs !== null) return safePreview(event.inputs);
+  if (event.outputs !== undefined && event.outputs !== null) return safePreview(event.outputs);
 
   return "";
 }
@@ -99,7 +135,7 @@ function EventItem({
       type="button"
       onClick={onClick}
       aria-expanded={isSelected}
-      aria-controls={`event-details-${event.id}`}
+      aria-controls={getEventDetailsId(event.id)}
       className={`w-full flex items-start gap-3 px-3 py-2 text-left transition-colors hover:bg-muted/50 ${
         isSelected ? "bg-muted" : ""
       }`}
@@ -129,7 +165,7 @@ function EventItem({
 }
 
 function EventDetails({ event }: { event: EventRecord }) {
-  const detailsId = `event-details-${event.id}`;
+  const detailsId = getEventDetailsId(event.id);
 
   return (
     <div
@@ -151,7 +187,7 @@ function EventDetails({ event }: { event: EventRecord }) {
         <div>
            <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1">Inputs</p>
           <pre className="text-xs font-mono text-foreground bg-background p-2 rounded border border-border overflow-auto max-h-40 whitespace-pre-wrap break-all">
-            {typeof event.inputs === "string" ? event.inputs : JSON.stringify(event.inputs, null, 2)}
+            {typeof event.inputs === "string" ? event.inputs : safeStringify(event.inputs, { indent: 2 })}
           </pre>
         </div>
       )}
@@ -159,7 +195,7 @@ function EventDetails({ event }: { event: EventRecord }) {
         <div>
            <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1">Outputs</p>
           <pre className="text-xs font-mono text-foreground bg-background p-2 rounded border border-border overflow-auto max-h-40 whitespace-pre-wrap break-all">
-            {typeof event.outputs === "string" ? event.outputs : JSON.stringify(event.outputs, null, 2)}
+            {typeof event.outputs === "string" ? event.outputs : safeStringify(event.outputs, { indent: 2 })}
           </pre>
         </div>
       )}
@@ -167,7 +203,7 @@ function EventDetails({ event }: { event: EventRecord }) {
         <div>
            <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1">References</p>
           <pre className="text-xs font-mono text-foreground bg-background p-2 rounded border border-border overflow-auto max-h-20">
-            {JSON.stringify(event.refs, null, 2)}
+            {safeStringify(event.refs, { indent: 2 })}
           </pre>
         </div>
       )}
