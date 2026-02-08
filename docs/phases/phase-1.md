@@ -29,6 +29,7 @@ Deliver the first “real” product shape: a split workbench with a Left Canvas
 ## State & data changes
 
 Use the canonical model shapes in `docs/architecture/shared-data-model.md`.
+This phase only constrains which `EventRecord.kind` values must be emitted.
 
 Minimum in-memory session state:
 

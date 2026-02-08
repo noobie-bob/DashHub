@@ -2,6 +2,8 @@
 
 This folder contains **LLM control files** that you can feed into Claude/agent runners to generate the codebase **phase-by-phase**.
 
+Canonical path/casing: `docs/llm/README.md`.
+
 The goal is to keep generation deterministic and architecture-consistent while building a **single-user** prototype of a **Generative UI Dashboard** using:
 
 - **Next.js + TypeScript**

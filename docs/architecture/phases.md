@@ -16,7 +16,7 @@ Every phase doc (`docs/phases/phase-N.md`) should include:
 
 ## Overview (high level)
 
-See **References (primary docs)** and **Phase → references map** at the bottom for the underlying tool/library docs and phase-specific pointers. This overview section is intentionally link-light; prefer adding new links to the references section.
+See **References (primary docs)** and **Phase → references map** at the bottom for the underlying tool/library docs and phase-specific pointers. This overview section is intentionally link-light. Do not add external URLs to the phase bullets; update the references section instead.
 
 ### Phase 0 — Project bootstrap
 - Bun + Next scripts, Tailwind + shadcn/radix baseline, Tambo provider wiring.

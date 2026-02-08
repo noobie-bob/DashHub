@@ -19,6 +19,8 @@ Scope constraints:
 - SQLite upload is in-memory for the session only (no disk persistence). For this we will use sql.js (SQLite compiled to WASM/JS) when we reach Phase 24+. (Project: https://github.com/sql-js/sql.js)
 - MCP is client-side (browser -> MCP server). This requires reachable servers and CORS if cross-origin. (Spec: https://modelcontextprotocol.io/specification/2025-06-18)
 
+These constraints are tracked as decisions in `docs/architecture/decisions.md` (DEC-0001..DEC-0003). Do not contradict the decision log.
+
 Non-goals (until later):
 - Perf optimization, background queues, multi-user permissions, enterprise security hardening.
 
@@ -75,6 +77,9 @@ C) DATA MODELS (TYPE-FIRST)
 ------------------------------------------------------------
 
 Use TypeScript types/interfaces and Zod where appropriate.
+
+Canonical model: `docs/architecture/shared-data-model.md`.
+Field names in code and docs must remain consistent with the canonical model.
 
 Artifact (minimum):
 - id: string

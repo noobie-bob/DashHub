@@ -32,6 +32,8 @@ Your job is to generate high-quality code and phase deliverables incrementally.
 - Tools: schema-defined operations; outputs become artifacts/events
 - MCP Manager: client-side config and wiring later. (Spec: https://modelcontextprotocol.io/specification/2025-06-18)
 
+The key constraints behind these responsibilities are tracked as decisions in `docs/architecture/decisions.md` (DEC-0001..DEC-0003). Do not contradict the decision log.
+
 ## Skill Modules
 
 ### Skill: WorkbenchUI

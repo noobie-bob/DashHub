@@ -164,6 +164,16 @@ Keep the Tambo thread and input running inside the Dock.
 
 ---
 
+### F) Create/update the decision log
+
+**Tasks**
+
+- Ensure `docs/architecture/decisions.md` exists.
+- Record Phase 0’s cross-phase commitments as decision entries (DEC-0001..DEC-0003).
+- When a future phase introduces a new cross-phase constraint, add a new decision entry and link to it from the relevant phase doc.
+
+---
+
 ## 0.5 Required Deliverables
 
 Create the following files and directories to enable deterministic generation in later phases:

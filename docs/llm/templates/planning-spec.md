@@ -2,6 +2,8 @@
 
 This is a reusable planning template intended for agent runners.
 
+Everything inside the fenced template below is an example structure. Adapt it to the current phase/feature, and always follow the phase doc + `docs/llm/llm.txt` when they conflict.
+
 ```text
 ---
 name: planner
