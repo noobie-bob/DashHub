@@ -44,9 +44,13 @@ const defaultState: SessionState = {
 
 const StoreContext = createContext<StoreContextType | null>(null);
 
-export function StoreProvider({ children }: { children: ReactNode }) {
-  const hasTambo = Boolean(process.env.NEXT_PUBLIC_TAMBO_API_KEY);
-
+export function StoreProvider({
+  children,
+  hasTambo,
+}: {
+  children: ReactNode;
+  hasTambo: boolean;
+}) {
   const [state, setState] = useState<SessionState>(() => ({
     ...defaultState,
     ui: {
