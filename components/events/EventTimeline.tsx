@@ -41,8 +41,24 @@ function formatFullDate(ts: number): string {
   return fullDateFormatter.format(new Date(ts));
 }
 
+function hashString(value: string): string {
+  let hash = 5381;
+  for (let i = 0; i < value.length; i += 1) {
+    hash = ((hash << 5) + hash) ^ value.charCodeAt(i);
+  }
+
+  return (hash >>> 0).toString(36);
+}
+
 function getEventDetailsId(eventId: string): string {
-  return `event-details-${encodeURIComponent(eventId)}`;
+  const safe = eventId
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 48);
+
+  return `event-details-${safe || "unknown"}-${hashString(eventId)}`;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -117,6 +133,8 @@ function safePreviewStringify(
     return JSON.stringify(key);
   };
 
+  const shouldStop = (currentLength: number) => currentLength >= maxLength;
+
   const preview = (next: unknown, depth: number): string => {
     if (next === null) return "null";
 
@@ -153,6 +171,7 @@ function safePreviewStringify(
           seen.add(next);
 
           const parts: string[] = [];
+          let previewLength = 0;
           let count = 0;
           let hasMore = false;
           for (const [k, v] of next) {
@@ -160,7 +179,14 @@ function safePreviewStringify(
               hasMore = true;
               break;
             }
+
+            if (shouldStop(previewLength)) {
+              hasMore = true;
+              break;
+            }
+
             parts.push(`${preview(k, depth + 1)} => ${preview(v, depth + 1)}`);
+            previewLength += parts[parts.length - 1].length + 2;
             count += 1;
           }
 
@@ -173,6 +199,7 @@ function safePreviewStringify(
           seen.add(next);
 
           const parts: string[] = [];
+          let previewLength = 0;
           let count = 0;
           let hasMore = false;
           for (const v of next) {
@@ -180,7 +207,14 @@ function safePreviewStringify(
               hasMore = true;
               break;
             }
+
+            if (shouldStop(previewLength)) {
+              hasMore = true;
+              break;
+            }
+
             parts.push(preview(v, depth + 1));
+            previewLength += parts[parts.length - 1].length + 2;
             count += 1;
           }
 
@@ -193,12 +227,20 @@ function safePreviewStringify(
           seen.add(next);
 
           const parts: string[] = [];
+          let previewLength = 0;
+          let hasMore = false;
           const limit = Math.min(next.length, maxArrayLength);
           for (let i = 0; i < limit; i += 1) {
+            if (shouldStop(previewLength)) {
+              hasMore = true;
+              break;
+            }
             parts.push(preview(next[i], depth + 1));
+            previewLength += parts[parts.length - 1].length + 2;
           }
 
-          return `[${parts.join(", ")}${next.length > maxArrayLength ? ", …" : ""}]`;
+          if (next.length > maxArrayLength) hasMore = true;
+          return `[${parts.join(", ")}${hasMore ? ", …" : ""}]`;
         }
 
         if (typeof next === "object" && next !== null) {
@@ -219,11 +261,17 @@ function safePreviewStringify(
           }
 
           const parts: string[] = [];
+          let previewLength = 0;
           let count = 0;
           let hasMore = false;
           for (const key in next) {
             if (!Object.prototype.hasOwnProperty.call(next, key)) continue;
             if (count >= maxKeys) {
+              hasMore = true;
+              break;
+            }
+
+            if (shouldStop(previewLength)) {
               hasMore = true;
               break;
             }
@@ -236,6 +284,7 @@ function safePreviewStringify(
             }
 
             parts.push(`${formatKey(key)}: ${valuePreview}`);
+            previewLength += parts[parts.length - 1].length + 2;
             count += 1;
           }
 
