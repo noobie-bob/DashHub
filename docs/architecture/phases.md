@@ -16,7 +16,7 @@ Every phase doc (`docs/phases/phase-N.md`) should include:
 
 ## Overview (high level)
 
-See **References (primary docs)** and **Phase → references map** at the bottom for the underlying tool/library docs. This overview is intentionally link-light.
+See **References (primary docs)** and **Phase → references map** at the bottom for the underlying tool/library docs and phase-specific pointers. This overview is intentionally link-light.
 
 ### Phase 0 — Project bootstrap
 - Bun + Next scripts, Tailwind + shadcn/radix baseline, Tambo provider wiring.
@@ -117,21 +117,21 @@ See **References (primary docs)** and **Phase → references map** at the bottom
 - SQLite main-thread vs worker is deferred until after Phase 24, as requested.
 
 ## References (primary docs)
-- Bun + Next.js: https://bun.com/docs/guides/ecosystem/nextjs
-- Next.js: https://nextjs.org/docs
-- Tailwind CSS: https://tailwindcss.com/docs
-- shadcn/ui: https://ui.shadcn.com/docs
-- Radix UI: https://www.radix-ui.com/primitives/docs/overview/introduction
-- Tambo React package: https://www.npmjs.com/package/@tambo-ai/react
-- Model Context Protocol spec: https://modelcontextprotocol.io/specification
-- MCP reference implementation: https://github.com/modelcontextprotocol/modelcontextprotocol
-- PDF.js: https://github.com/mozilla/pdf.js
-- Tesseract.js: https://github.com/naptha/tesseract.js
-- SheetJS (xlsx): https://docs.sheetjs.com/
-- Mammoth (docx): https://github.com/mwilliamson/mammoth.js
-- sql.js: https://sql.js.org/
-- SQLite WASM docs: https://sqlite.org/wasm
-- React Flow: https://reactflow.dev/
+- Bun + Next.js: [Bun Next.js guide](https://bun.com/docs/guides/ecosystem/nextjs)
+- Next.js: [Next.js documentation](https://nextjs.org/docs)
+- Tailwind CSS: [Tailwind documentation](https://tailwindcss.com/docs)
+- shadcn/ui: [shadcn/ui documentation](https://ui.shadcn.com/docs)
+- Radix UI: [Radix UI primitives documentation](https://www.radix-ui.com/primitives/docs/overview/introduction)
+- Tambo React package: [@tambo-ai/react on npm](https://www.npmjs.com/package/@tambo-ai/react)
+- Model Context Protocol spec: [MCP specification](https://modelcontextprotocol.io/specification)
+- MCP reference implementation: [modelcontextprotocol/modelcontextprotocol](https://github.com/modelcontextprotocol/modelcontextprotocol)
+- PDF.js: [mozilla/pdf.js](https://github.com/mozilla/pdf.js)
+- Tesseract.js: [naptha/tesseract.js](https://github.com/naptha/tesseract.js)
+- SheetJS (xlsx): [SheetJS docs](https://docs.sheetjs.com/)
+- Mammoth (docx): [mwilliamson/mammoth.js](https://github.com/mwilliamson/mammoth.js)
+- sql.js: [sql.js docs](https://sql.js.org/)
+- SQLite WASM docs: [sqlite.org/wasm](https://sqlite.org/wasm)
+- React Flow: [React Flow docs](https://reactflow.dev/)
 
 ### Phase → references map (quick lookup)
 Phases can span multiple tool areas; this map is a non-exhaustive starting point for the primary implementation phases.
