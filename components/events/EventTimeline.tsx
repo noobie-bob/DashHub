@@ -99,7 +99,7 @@ function EventItem({
       type="button"
       onClick={onClick}
       aria-expanded={isSelected}
-      aria-controls={isSelected ? `event-details-${event.id}` : undefined}
+      aria-controls={`event-details-${event.id}`}
       className={`w-full flex items-start gap-3 px-3 py-2 text-left transition-colors hover:bg-muted/50 ${
         isSelected ? "bg-muted" : ""
       }`}
@@ -128,10 +128,12 @@ function EventItem({
   );
 }
 
-function EventDetails({ event, id }: { event: EventRecord; id: string }) {
+function EventDetails({ event }: { event: EventRecord }) {
+  const detailsId = `event-details-${event.id}`;
+
   return (
     <div
-      id={id}
+      id={detailsId}
       className="border-t border-border bg-muted/30 p-3 space-y-3 animate-in fade-in slide-in-from-top-1 duration-200"
     >
       <div className="grid grid-cols-2 gap-2">
@@ -209,9 +211,7 @@ export function EventTimeline() {
                   isSelected={selectedId === event.id}
                   onClick={() => setSelectedId(selectedId === event.id ? null : event.id)}
                 />
-                {selectedId === event.id && (
-                  <EventDetails id={`event-details-${event.id}`} event={event} />
-                )}
+                {selectedId === event.id && <EventDetails event={event} />}
               </div>
             ))}
           </div>
