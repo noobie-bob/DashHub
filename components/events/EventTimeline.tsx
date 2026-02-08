@@ -44,19 +44,199 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return proto === Object.prototype || proto === null;
 }
 
-function safePreviewStringify(value: unknown, maxLength = 200): string {
-  try {
-    const serialized = JSON.stringify(value);
-    if (serialized === undefined) return "[unserializable]";
+function toBoundedJsonValue(
+  value: unknown,
+  {
+    maxDepth,
+    maxKeys,
+    maxArrayLength,
+    maxNodes,
+    maxStringLength,
+  }: {
+    maxDepth: number;
+    maxKeys: number;
+    maxArrayLength: number;
+    maxNodes: number;
+    maxStringLength: number;
+  },
+): unknown {
+  const seen = new WeakSet<object>();
+  let nodes = 0;
 
-    if (serialized.length > maxLength) {
-      return `${serialized.slice(0, maxLength)}…`;
+  const ELLIPSIS = "...";
+  const TRUNCATED_MARKER = "[dashhub:truncated]";
+  const UNSERIALIZABLE_MARKER = "[dashhub:unserializable]";
+  const CIRCULAR_MARKER = "[dashhub:circular]";
+
+  function consumeNodeBudget(): boolean {
+    if (nodes >= maxNodes) return false;
+    nodes += 1;
+    return true;
+  }
+
+  function visit(v: unknown, depth: number): unknown {
+    if (depth > maxDepth) return TRUNCATED_MARKER;
+
+    if (v === null) return null;
+
+    if (typeof v === "string") {
+      return v.length > maxStringLength ? `${v.slice(0, maxStringLength)}${ELLIPSIS}` : v;
+    }
+    if (typeof v === "number" || typeof v === "boolean") return v;
+    if (typeof v === "bigint") return v.toString();
+    if (typeof v === "undefined" || typeof v === "function" || typeof v === "symbol") {
+      return UNSERIALIZABLE_MARKER;
+    }
+    if (typeof v !== "object") return UNSERIALIZABLE_MARKER;
+
+    if (v instanceof Date) {
+      if (!consumeNodeBudget()) return TRUNCATED_MARKER;
+      return v.toISOString();
+    }
+    if (v instanceof Error) {
+      if (!consumeNodeBudget()) return TRUNCATED_MARKER;
+      return {
+        __type: "Error",
+        name: v.name,
+        message: v.message,
+        stack: typeof v.stack === "string" ? visit(v.stack, depth + 1) : undefined,
+      };
     }
 
+    if (seen.has(v)) return CIRCULAR_MARKER;
+    if (!consumeNodeBudget()) return TRUNCATED_MARKER;
+    seen.add(v);
+
+    if (Array.isArray(v)) {
+      const out: unknown[] = [];
+      const limit = Math.min(v.length, maxArrayLength);
+      for (let i = 0; i < limit; i += 1) {
+        out.push(visit(v[i], depth + 1));
+      }
+
+      if (v.length > maxArrayLength) {
+        out.push(`[+${v.length - maxArrayLength} more]`);
+      }
+
+      return out;
+    }
+
+    if (v instanceof Map) {
+      const entries: Array<[unknown, unknown]> = [];
+      let i = 0;
+      for (const [k, val] of v.entries()) {
+        if (i >= maxArrayLength) break;
+        entries.push([visit(k, depth + 1), visit(val, depth + 1)]);
+        i += 1;
+      }
+      return {
+        __type: "Map",
+        entries,
+        __truncated__: v.size > maxArrayLength ? TRUNCATED_MARKER : undefined,
+      };
+    }
+
+    if (v instanceof Set) {
+      const values: unknown[] = [];
+      let i = 0;
+      for (const val of v.values()) {
+        if (i >= maxArrayLength) break;
+        values.push(visit(val, depth + 1));
+        i += 1;
+      }
+      return {
+        __type: "Set",
+        values,
+        __truncated__: v.size > maxArrayLength ? TRUNCATED_MARKER : undefined,
+      };
+    }
+
+    const obj = v as Record<string, unknown>;
+    const out: Record<string, unknown> = {};
+    let count = 0;
+    let hasMore = false;
+    for (const key in obj) {
+      if (!Object.prototype.hasOwnProperty.call(obj, key)) continue;
+      if (count >= maxKeys) {
+        hasMore = true;
+        break;
+      }
+      out[key] = visit(obj[key], depth + 1);
+      count += 1;
+    }
+
+    if (hasMore) out["__truncated__"] = TRUNCATED_MARKER;
+    return out;
+  }
+
+  return visit(value, 0);
+}
+
+function safeBoundedStringify(
+  value: unknown,
+  {
+    maxChars,
+    indent,
+    maxDepth,
+    maxKeys,
+    maxArrayLength,
+    maxNodes,
+    maxStringLength,
+  }: {
+    maxChars: number;
+    indent: number;
+    maxDepth: number;
+    maxKeys: number;
+    maxArrayLength: number;
+    maxNodes: number;
+    maxStringLength: number;
+  },
+): string {
+  try {
+    const bounded = toBoundedJsonValue(value, {
+      maxDepth,
+      maxKeys,
+      maxArrayLength,
+      maxNodes,
+      maxStringLength,
+    });
+
+    const serialized = JSON.stringify(bounded, null, indent);
+    if (serialized === undefined) return "[dashhub:unserializable]";
+    if (serialized.length > maxChars) return `${serialized.slice(0, maxChars)}...`;
     return serialized;
   } catch {
-    return "[unserializable]";
+    return "[dashhub:unserializable]";
   }
+}
+
+const EVENT_STRINGIFY_LIMITS = {
+  preview: {
+    maxChars: 200,
+    indent: 0,
+    maxDepth: 3,
+    maxKeys: 30,
+    maxArrayLength: 30,
+    maxNodes: 300,
+    maxStringLength: 200,
+  },
+  details: {
+    maxChars: 10_000,
+    indent: 2,
+    maxDepth: 6,
+    maxKeys: 100,
+    maxArrayLength: 100,
+    maxNodes: 1_500,
+    maxStringLength: 1_000,
+  },
+} as const;
+
+function stringifyEventPreview(value: unknown): string {
+  return safeBoundedStringify(value, EVENT_STRINGIFY_LIMITS.preview);
+}
+
+function stringifyEventDetails(value: unknown): string {
+  return safeBoundedStringify(value, EVENT_STRINGIFY_LIMITS.details);
 }
 
 function getEventPreview(event: EventRecord): string {
@@ -77,8 +257,8 @@ function getEventPreview(event: EventRecord): string {
   if (typeof event.outputs === "string") return event.outputs;
 
   // Fallback for objects
-  if (isRecord(event.inputs)) return safePreviewStringify(event.inputs);
-  if (isRecord(event.outputs)) return safePreviewStringify(event.outputs);
+  if (isRecord(event.inputs) || Array.isArray(event.inputs)) return stringifyEventPreview(event.inputs);
+  if (isRecord(event.outputs) || Array.isArray(event.outputs)) return stringifyEventPreview(event.outputs);
 
   return "";
 }
@@ -151,7 +331,7 @@ function EventDetails({ event }: { event: EventRecord }) {
         <div>
            <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1">Inputs</p>
           <pre className="text-xs font-mono text-foreground bg-background p-2 rounded border border-border overflow-auto max-h-40 whitespace-pre-wrap break-all">
-            {typeof event.inputs === "string" ? event.inputs : JSON.stringify(event.inputs, null, 2)}
+            {typeof event.inputs === "string" ? event.inputs : stringifyEventDetails(event.inputs)}
           </pre>
         </div>
       )}
@@ -159,7 +339,7 @@ function EventDetails({ event }: { event: EventRecord }) {
         <div>
            <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1">Outputs</p>
           <pre className="text-xs font-mono text-foreground bg-background p-2 rounded border border-border overflow-auto max-h-40 whitespace-pre-wrap break-all">
-            {typeof event.outputs === "string" ? event.outputs : JSON.stringify(event.outputs, null, 2)}
+            {typeof event.outputs === "string" ? event.outputs : stringifyEventDetails(event.outputs)}
           </pre>
         </div>
       )}
@@ -167,7 +347,7 @@ function EventDetails({ event }: { event: EventRecord }) {
         <div>
            <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1">References</p>
           <pre className="text-xs font-mono text-foreground bg-background p-2 rounded border border-border overflow-auto max-h-20">
-            {JSON.stringify(event.refs, null, 2)}
+            {stringifyEventDetails(event.refs)}
           </pre>
         </div>
       )}
