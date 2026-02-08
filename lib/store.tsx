@@ -34,6 +34,10 @@ interface StoreContextType {
   setDockWidth: (width: number) => void;
 }
 
+// Keep the in-memory event ledger bounded to avoid unbounded growth.
+// Oldest events are dropped once the cap is reached.
+const MAX_SESSION_EVENTS = 1000;
+
 const defaultState: SessionState = {
   events: [],
   ui: {
@@ -44,9 +48,7 @@ const defaultState: SessionState = {
 
 const StoreContext = createContext<StoreContextType | null>(null);
 
-export function StoreProvider({ children }: { children: ReactNode }) {
-  const hasTambo = Boolean(process.env.NEXT_PUBLIC_TAMBO_API_KEY);
-
+export function StoreProvider({ children, hasTambo }: { children: ReactNode; hasTambo: boolean }) {
   const [state, setState] = useState<SessionState>(() => ({
     ...defaultState,
     ui: {
@@ -58,10 +60,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const recordEvent = useCallback(
     (kind: EventKind, data: { inputs?: unknown; outputs?: unknown }, refs?: EventRefs): EventRecord => {
       const event = createEvent(kind, data, refs);
-      setState((prev) => ({
-        ...prev,
-        events: [...prev.events, event],
-      }));
+      setState((prev) => {
+        const prevEvents = prev.events;
+        const nextEvents =
+          prevEvents.length >= MAX_SESSION_EVENTS
+            ? [...prevEvents.slice(prevEvents.length - MAX_SESSION_EVENTS + 1), event]
+            : [...prevEvents, event];
+        return {
+          ...prev,
+          events: nextEvents,
+        };
+      });
       return event;
     },
     []
