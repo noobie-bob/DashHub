@@ -30,7 +30,8 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (ignore secrets; allow committed templates)
+# env files
+# Ignore real env files, but keep non-secret templates in version control
 .env*
 !.env.example
 !.env.template
