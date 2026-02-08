@@ -34,7 +34,7 @@ yarn-error.log*
 # Ignore real env files, but keep non-secret templates in version control
 .env*
 # NOTE: keep `!` rules below `.env*` so they stay tracked
-!.env.example
+!.env*.example
 
 # vercel
 .vercel
