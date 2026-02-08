@@ -28,6 +28,7 @@ By the end of Phase 3 you will have:
 ## 3.3 Additions (UI / Helpers)
 
 ### UI: Event Timeline
+
 Add a timeline view (can live in Dock or as a split within Dock):
 
 - List items show:
@@ -37,6 +38,7 @@ Add a timeline view (can live in Dock or as a split within Dock):
 - Clicking an event opens details in Inspector.
 
 ### UI: Event Inspector
+
 Details panel shows:
 
 - `eventId`
@@ -48,6 +50,7 @@ Details panel shows:
 - pretty-printed JSON view (use a simple code block style)
 
 ### Internal Helper: `recordEvent`
+
 Centralize event creation into a helper:
 
 - creates `eventId`
@@ -62,6 +65,7 @@ Centralize event creation into a helper:
 No agent tools yet.
 
 **Internal only:**
+
 - `recordEvent(kind, data?, refs?)`
 - `selectEvent(eventId)`
 - Optional: `clearEvents()` (debug only, not required)
@@ -76,10 +80,12 @@ Introduce an `EventRecord` model:
 - `selectedEventId?: string`
 
 **EventRecord (minimum viable):**
+
 - `eventId: string`
 - `timestamp: number`
 - `kind: 'message.sent' | 'message.received' | string`
-- `data?: unknown`
+- `inputs?: unknown`
+- `outputs?: unknown`
 - `refs?: { messageId?: string; artifactIds?: string[]; widgetIds?: string[]; mcpServerId?: string }`
 
 ---
@@ -87,12 +93,14 @@ Introduce an `EventRecord` model:
 ## 3.6 Key Implementation Details
 
 ### Ensure messages generate events
+
 - When the user submits text:
-  - record `message.sent` with `{ text, messageId? }`
+  - record `message.sent` with `inputs: text` and `{ messageId? }`
 - When the assistant responds:
-  - record `message.received` with `{ text?, messageId? }`
+  - record `message.received` with `outputs: text` and `{ messageId? }`
 
 If the assistant response is streamed:
+
 - record the event once you have a final response (or record both start/end if you want, optional).
 
 ---
@@ -100,13 +108,15 @@ If the assistant response is streamed:
 ## 3.7 Pseudocode (only for the critical logic)
 
 ```pseudo
-function recordEvent(kind, data = null, refs = null):
+function recordEvent(kind, data = { inputs: null, outputs: null }, refs = null):
   event = {
     eventId: newId(),
     timestamp: now(),
     kind: kind,
-    data: data,
+    inputs: data.inputs,
+    outputs: data.outputs,
     refs: refs
   }
   events.append(event)
   return event.eventId
+```

@@ -15,7 +15,7 @@ export function Dock() {
   const dockTabs: readonly string[] = DOCK_TABS;
   const isDockTab = (tab: string): tab is DockTab => dockTabs.includes(tab);
 
-  return (
+  const Content = (
     <div className="flex h-full flex-col bg-background">
       <Tabs
         id="dock-tabs"
@@ -55,16 +55,14 @@ export function Dock() {
         {/* Chat Tab */}
         <TabsContent value="chat" className="flex flex-1 flex-col m-0 overflow-hidden">
           {hasTambo ? (
-            <TamboThreadProvider>
-              <TamboThreadInputProvider>
+             <TamboThreadInputProvider>
                 <div className="flex-1 overflow-auto">
                   <ChatThread />
                 </div>
                 <div className="shrink-0 border-t border-border p-3">
                   <ChatComposer />
                 </div>
-              </TamboThreadInputProvider>
-            </TamboThreadProvider>
+             </TamboThreadInputProvider>
           ) : (
             <div className="flex h-full items-center justify-center px-6 text-center text-sm text-muted-foreground">
               Chat is disabled (missing <code className="font-mono">NEXT_PUBLIC_TAMBO_API_KEY</code>).
@@ -123,4 +121,14 @@ export function Dock() {
       </Tabs>
     </div>
   );
+
+  if (hasTambo) {
+    return (
+      <TamboThreadProvider>
+        {Content}
+      </TamboThreadProvider>
+    );
+  }
+
+  return Content;
 }
