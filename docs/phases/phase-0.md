@@ -90,7 +90,7 @@ This guarantees Bun executes the Next.js CLI.
 ```bash
 bun --version
 bun install
-bun dev
+bun run dev
 ```
 
 ---
