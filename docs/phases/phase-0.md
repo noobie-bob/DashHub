@@ -35,6 +35,7 @@ By the end of Phase 0 you will have:
 ## 0.4 Setup Tasks (step-by-step)
 
 ### A) Ensure Bun runtime is used for Next.js
+
 Bun’s Next.js guide recommends running Next using Bun’s runtime by prefixing scripts with `bun --bun`. [1](https://reactflow.dev/)[2](https://deepwiki.com/Skyvern-AI/skyvern/7.1-workflow-editor-architecture)
 
 **Tasks:**
@@ -46,3 +47,127 @@ Bun’s Next.js guide recommends running Next using Bun’s runtime by prefixing
 1) If the repo is empty (no Next app yet):
 ```bash
 bun create next-app@latest .
+```
+
+2) If a Next.js app already exists:
+```bash
+bun install
+```
+
+Update `package.json` scripts:
+
+```json
+{
+  "scripts": {
+    "dev": "bun --bun next dev",
+    "build": "bun --bun next build",
+    "start": "bun --bun next start",
+    "lint": "next lint"
+  }
+}
+```
+
+This guarantees Bun executes the Next.js CLI.
+
+---
+
+### B) Install and Baseline Tailwind CSS
+
+**Tasks**
+
+- Install Tailwind CSS, PostCSS, and Autoprefixer
+- Initialize Tailwind configuration
+- Add base Tailwind directives to the global CSS file
+
+**Outcome:** Tailwind styles apply correctly in development.
+
+---
+
+### C) Add shadcn/ui + Radix UI Baseline
+
+**Tasks**
+
+- Set up shadcn/ui
+- Ensure Radix UI primitives are available
+- Define:
+  - Global typography
+  - Theme tokens (light and dark)
+  - Base layout spacing rules
+
+**Deliverable**
+
+A minimal Design System Baseline Page demonstrating 3–5 primitives, such as:
+
+- Button
+- Input
+- Dialog
+- Tabs
+- Toast
+
+---
+
+### D) Add Tambo and Verify Provider Wiring
+
+Tambo is a generative UI toolkit for React that manages agent state, streaming, and MCP interactions. [3](https://www.npmjs.com/package/@tambo-ai/react)
+
+**Tasks**
+
+- Install `@tambo-ai/react`
+- Mount `TamboProvider` at the application root
+- Render a minimal thread UI using Tambo hooks (thread + input)
+
+**Outcome:** Messages render and flow through Tambo, even without custom component registration.
+
+Keep the Tambo thread and input running inside the Dock.
+
+---
+
+### E) Baseline Repository Hygiene
+
+**Tasks**
+
+- Add `.editorconfig`
+- Configure Prettier (format-on-save)
+- Enable ESLint (Next.js default)
+- Optional: Conventional commits
+- Create a structured documentation layout under `/docs`
+
+---
+
+## 0.5 Required Deliverables
+
+Create the following files and directories to enable deterministic generation in later phases:
+
+```
+docs/
+├─ phases/
+│  ├─ phase-0.md   (this document)
+│  └─ phase-1.md
+└─ llm/
+   ├─ llm.txt          (stub placeholder)
+   ├─ claude.skills    (stub placeholder)
+   └─ agent.skills     (stub placeholder)
+```
+
+---
+
+## 0.6 Acceptance Checklist
+
+Phase 0 is complete when all of the following are true:
+
+- `bun --bun next dev` runs successfully and serves the app
+- Tailwind styles apply and hot-reload correctly
+- At least one shadcn/Radix component renders (e.g., Dialog or Tabs)
+- `TamboProvider` is mounted and a basic thread UI renders messages
+- `docs/phases/phase-0.md` and `docs/phases/phase-1.md` exist in the repo
+
+---
+
+## 0.7 Handoff to Phase 1
+
+Phase 1 will:
+
+- Convert the UI into a Workbench split layout:
+  - Left: Canvas
+  - Right: Dock
+- Add the event timeline skeleton
