@@ -54,7 +54,8 @@ function hashStringForDomId(value: string): string {
 }
 
 // Internal DOM id helper for `aria-controls` / details panel wiring.
-// Not intended as a stable external contract.
+// Format: `event-details-<normalized-slug>-<hash-of-original-id>`.
+// Not intended as a stable external contract; do not persist or deep-link.
 function getEventDetailsId(eventId: string): string {
   const normalized = eventId
     .trim()
