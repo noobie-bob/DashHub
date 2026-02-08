@@ -15,7 +15,19 @@ export function Providers({
     }
 
     console.error("Missing NEXT_PUBLIC_TAMBO_API_KEY");
-    return <>{children}</>;
+
+    return (
+      <>
+        <div
+          role="alert"
+          className="mx-auto my-4 w-fit rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900"
+        >
+          Missing <code className="font-mono">NEXT_PUBLIC_TAMBO_API_KEY</code>. Tambo
+          features are disabled.
+        </div>
+        {children}
+      </>
+    );
   }
 
   return <TamboProvider apiKey={apiKey}>{children}</TamboProvider>;
