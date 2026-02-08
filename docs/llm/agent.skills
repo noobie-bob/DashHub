@@ -1,0 +1,94 @@
+# agent.skills — Phase-by-Phase Builder Agent (Single-user Prototype)
+
+This agent builds the project incrementally from phase docs.
+It can implement UI, tools, and integration layers while preserving architecture invariants.
+
+## Primary Mission
+Build a Generative UI Dashboard workbench:
+- Left Canvas renders pinned widgets + persistent interactables.
+- Right Dock hosts chat, uploads, DB tools, MCP config & approvals.
+Generative UI is powered by Tambo component registration + tool calls. (Package: https://www.npmjs.com/package/@tambo-ai/react)
+
+## Constraints
+- Single user only.
+- SQLite upload is session-only, in-memory.
+- MCP is client-side (browser -> MCP server). (Spec: https://modelcontextprotocol.io/specification/2025-06-18)
+- Bun runtime is used to run Next (`bun --bun next ...`). (Bun Next.js guide: https://bun.sh/docs/guides/ecosystem/nextjs)
+
+These constraints correspond to DEC-0001..DEC-0003 in `docs/architecture/decisions.md` and must not drift.
+
+## Agent Workflow (for every phase)
+1) Read `docs/phases/phase-N.md`.
+2) Extract:
+   - Objective
+   - Additions (UI/components/tools)
+   - State model changes
+   - Acceptance checklist
+3) Implement the smallest set of code changes to satisfy acceptance.
+4) Ensure:
+   - TypeScript passes
+   - App runs with Bun
+   - New actions emit Event Ledger records
+5) Update any phase docs only if necessary.
+
+## Capabilities (Skills)
+
+### 1) RepoBootstrapSkill (Phase 0)
+- Setup Bun scripts for Next (`bun --bun next dev/build/start`).
+- Setup Tailwind + shadcn/radix baseline.
+- Setup TamboProvider wiring.
+
+### 2) WorkbenchSkill (Phases 1–3)
+- Build split-pane workbench layout (Canvas/Dock).
+- Implement Dock tabs.
+- Implement event timeline view.
+
+### 3) TamboComponentSkill (Phases 4–6)
+- Define Tambo components with Zod props schemas and descriptive metadata.
+- Add one interactable component (TaskBoard).
+- Add local tools callable by the agent (schema-defined).
+
+### 4) PersistenceSkill (Phase 7+)
+- Add localStorage persistence with schemaVersion.
+- Persist thread state/events/widgets/templates without storing large payloads.
+
+### 5) ArtifactIngestionSkill (Phases 12–20)
+- Implement artifact types and derivation links.
+- Integrate OSS parsers:
+  - PDF.js text extraction (https://github.com/mozilla/pdf.js)
+  - tesseract.js OCR (https://github.com/naptha/tesseract.js)
+  - SheetJS xlsx parsing (https://docs.sheetjs.com)
+  - mammoth.js docx extraction (https://github.com/mwilliamson/mammoth.js)
+- Create derived artifacts (Text/Dataset) and auto-insight widgets.
+
+### 6) MCPIntegrationSkill (Phases 21–23)
+- Add client-side MCP server config UI stored in localStorage.
+- Wire MCP servers into TamboProvider.
+- Add approval UX and provenance recording.
+- Follow MCP transport and origin/security considerations. (Repo: https://github.com/modelcontextprotocol/modelcontextprotocol)
+
+### 7) DatabaseSkill (Phases 24–29)
+- SQLite in-memory via sql.js from uploaded file bytes. (Project: https://github.com/sql-js/sql.js)
+- Build schema extraction -> SchemaArtifact.
+- Build query runner -> QueryResultArtifact.
+- Visualization suggestions -> Graph component.
+- ERD module using React Flow. (Docs: https://reactflow.dev)
+
+### 8) ExplainabilitySkill (Phase 30)
+- Build “Explain this dashboard” overlay using Event Ledger.
+- Provide provenance graph widget ID -> artifacts -> tool calls -> MCP servers.
+
+## Invariants (Never Break These)
+- Canvas rendering is driven by WidgetInstances, not chat thread messages.
+- Every artifact/tool/widget is identifiable via stable IDs.
+- Every significant action emits an EventRecord.
+- The agent must only call registered tools/components.
+- UI remains usable without MCP/DB configured (graceful empty states).
+
+## Output Expectations (when implementing a phase)
+- Provide a concise plan.
+- Implement the phase.
+- Provide commands:
+  - bun install
+  - bun --bun next dev
+- Provide test prompts or manual steps matching acceptance checklist.
