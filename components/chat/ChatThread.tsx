@@ -58,6 +58,24 @@ export function ChatThread() {
       pendingAssistantMessageIdsRef.current = new Set();
     }
 
+    if (isGenerationSettled && pendingAssistantMessageIdsRef.current.size > 0) {
+      const messagesById = new Map(messages.map((m) => [m.id, m] as const));
+
+      for (const id of Array.from(pendingAssistantMessageIdsRef.current)) {
+        const msg = messagesById.get(id);
+        if (!msg) {
+          pendingAssistantMessageIdsRef.current.delete(id);
+          continue;
+        }
+
+        const contentText = getMessageText(msg.content);
+        if (!contentText) continue;
+
+        recordEvent("message.received", { outputs: contentText }, { messageIds: [msg.id] });
+        pendingAssistantMessageIdsRef.current.delete(id);
+      }
+    }
+
     for (const msg of messages) {
       if (seenMessageIdsRef.current.has(msg.id)) continue;
 
@@ -78,24 +96,6 @@ export function ChatThread() {
 
       seenMessageIdsRef.current.add(msg.id);
       pendingAssistantMessageIdsRef.current.delete(msg.id);
-    }
-
-    if (isGenerationSettled && pendingAssistantMessageIdsRef.current.size > 0) {
-      const messagesById = new Map(messages.map((m) => [m.id, m] as const));
-
-      for (const id of Array.from(pendingAssistantMessageIdsRef.current)) {
-        const msg = messagesById.get(id);
-        if (!msg) {
-          pendingAssistantMessageIdsRef.current.delete(id);
-          continue;
-        }
-
-        const contentText = getMessageText(msg.content);
-        if (!contentText) continue;
-
-        recordEvent("message.received", { outputs: contentText }, { messageIds: [msg.id] });
-        pendingAssistantMessageIdsRef.current.delete(id);
-      }
     }
   }, [threadId, thread?.messages, generationStage, recordEvent]);
 
