@@ -12,12 +12,12 @@ export function Workbench() {
   const isResizing = resizingPointerId !== null;
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const persistedDockWidth = state.ui.dockWidth;
-  const dockWidth = dockWidthDraft ?? persistedDockWidth;
-
   const clampDockWidth = useCallback((width: number) => {
     return Math.max(280, Math.min(600, width));
   }, []);
+
+  const persistedDockWidth = clampDockWidth(state.ui.dockWidth);
+  const dockWidth = clampDockWidth(dockWidthDraft ?? persistedDockWidth);
 
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
@@ -33,8 +33,9 @@ export function Workbench() {
   const handlePointerMove = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
       if (resizingPointerId !== e.pointerId) return;
-      const containerRight = containerRef.current?.getBoundingClientRect().right ?? window.innerWidth;
-      const newDockWidth = containerRight - e.clientX;
+      const containerRect = containerRef.current?.getBoundingClientRect();
+      if (!containerRect) return;
+      const newDockWidth = containerRect.right - e.clientX;
       setDockWidthDraft(clampDockWidth(newDockWidth));
     },
     [clampDockWidth, resizingPointerId]
@@ -53,11 +54,11 @@ export function Workbench() {
       setResizingPointerId(null);
 
       if (dockWidthDraft !== null) {
-        setDockWidth(dockWidthDraft);
+        setDockWidth(clampDockWidth(dockWidthDraft));
         setDockWidthDraft(null);
       }
     },
-    [dockWidthDraft, resizingPointerId, setDockWidth]
+    [clampDockWidth, dockWidthDraft, resizingPointerId, setDockWidth]
   );
 
   return (
