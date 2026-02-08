@@ -3,36 +3,61 @@
 import { Canvas } from "./Canvas";
 import { Dock } from "./Dock";
 import { useState, useCallback } from "react";
+import { useStore } from "@/lib/store";
 
 export function Workbench() {
-  const [dockWidth, setDockWidth] = useState(420);
-  const [isResizing, setIsResizing] = useState(false);
+  const { state, setDockWidth } = useStore();
+  const [dockWidthDraft, setDockWidthDraft] = useState<number | null>(null);
+  const [resizingPointerId, setResizingPointerId] = useState<number | null>(null);
+  const isResizing = resizingPointerId !== null;
 
-  const handleMouseDown = useCallback(() => {
-    setIsResizing(true);
+  const dockWidth = dockWidthDraft ?? state.ui.dockWidth;
+
+  const clampDockWidth = useCallback((width: number) => {
+    return Math.max(280, Math.min(600, width));
   }, []);
 
-  const handleMouseMove = useCallback(
-    (e: React.MouseEvent) => {
-      if (!isResizing) return;
-      const containerWidth = window.innerWidth;
-      const newDockWidth = containerWidth - e.clientX;
-      // Clamp between 280 and 600px
-      setDockWidth(Math.max(280, Math.min(600, newDockWidth)));
+  const handlePointerDown = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      e.currentTarget.setPointerCapture(e.pointerId);
+      setResizingPointerId(e.pointerId);
+      setDockWidthDraft(state.ui.dockWidth);
     },
-    [isResizing]
+    [state.ui.dockWidth]
   );
 
-  const handleMouseUp = useCallback(() => {
-    setIsResizing(false);
-  }, []);
+  const handlePointerMove = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      if (resizingPointerId !== e.pointerId) return;
+      const newDockWidth = window.innerWidth - e.clientX;
+      setDockWidthDraft(clampDockWidth(newDockWidth));
+    },
+    [clampDockWidth, resizingPointerId]
+  );
+
+  const handlePointerUp = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      if (resizingPointerId !== e.pointerId) return;
+      setResizingPointerId(null);
+
+      if (dockWidthDraft !== null) {
+        setDockWidth(dockWidthDraft);
+        setDockWidthDraft(null);
+      }
+
+      try {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      } catch {
+        // no-op
+      }
+    },
+    [dockWidthDraft, resizingPointerId, setDockWidth]
+  );
 
   return (
     <div
-      className="flex h-screen w-full bg-background"
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
+      className={`flex h-screen w-full bg-background ${isResizing ? "select-none" : ""}`}
     >
       {/* Left Canvas */}
       <div className="flex-1 min-w-0 overflow-hidden">
@@ -44,7 +69,12 @@ export function Workbench() {
         className={`w-1 cursor-col-resize transition-colors ${
           isResizing ? "bg-primary/50" : "bg-border hover:bg-primary/30"
         }`}
-        onMouseDown={handleMouseDown}
+        style={{ touchAction: "none" }}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+        onLostPointerCapture={handlePointerUp}
       />
 
       {/* Right Dock */}
