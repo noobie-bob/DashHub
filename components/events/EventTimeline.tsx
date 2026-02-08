@@ -252,8 +252,8 @@ function safePreviewStringify(
   return truncate(preview(value, 0));
 }
 
-function safePreview(value: unknown, maxLength = 200): string {
-  return safePreviewStringify(value, maxLength);
+function safePreview(value: unknown, options?: number | SafePreviewOptions): string {
+  return safePreviewStringify(value, options ?? 200);
 }
 
 function getEventPreview(event: EventRecord): string {
@@ -263,12 +263,21 @@ function getEventPreview(event: EventRecord): string {
     return "Artifact Created";
   }
 
+  if (event.kind === "message.sent" && typeof event.inputs === "string") {
+    return event.inputs;
+  }
   if (event.kind === "message.sent" && event.inputs !== undefined && event.inputs !== null) {
     return safePreview(event.inputs);
+  }
+  if (event.kind === "message.received" && typeof event.outputs === "string") {
+    return event.outputs;
   }
   if (event.kind === "message.received" && event.outputs !== undefined && event.outputs !== null) {
     return safePreview(event.outputs);
   }
+
+  if (typeof event.inputs === "string") return event.inputs;
+  if (typeof event.outputs === "string") return event.outputs;
 
   if (event.inputs !== undefined && event.inputs !== null) return safePreview(event.inputs);
   if (event.outputs !== undefined && event.outputs !== null) return safePreview(event.outputs);
