@@ -2,7 +2,7 @@
 
 import { Canvas } from "./Canvas";
 import { Dock } from "./Dock";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useStore } from "@/lib/store";
 
 export function Workbench() {
@@ -10,8 +10,10 @@ export function Workbench() {
   const [dockWidthDraft, setDockWidthDraft] = useState<number | null>(null);
   const [resizingPointerId, setResizingPointerId] = useState<number | null>(null);
   const isResizing = resizingPointerId !== null;
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  const dockWidth = dockWidthDraft ?? state.ui.dockWidth;
+  const persistedDockWidth = state.ui.dockWidth;
+  const dockWidth = dockWidthDraft ?? persistedDockWidth;
 
   const clampDockWidth = useCallback((width: number) => {
     return Math.max(280, Math.min(600, width));
@@ -22,15 +24,16 @@ export function Workbench() {
       e.preventDefault();
       e.currentTarget.setPointerCapture(e.pointerId);
       setResizingPointerId(e.pointerId);
-      setDockWidthDraft(state.ui.dockWidth);
+      setDockWidthDraft(persistedDockWidth);
     },
-    [state.ui.dockWidth]
+    [persistedDockWidth]
   );
 
   const handlePointerMove = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
       if (resizingPointerId !== e.pointerId) return;
-      const newDockWidth = window.innerWidth - e.clientX;
+      const containerRight = containerRef.current?.getBoundingClientRect().right ?? window.innerWidth;
+      const newDockWidth = containerRight - e.clientX;
       setDockWidthDraft(clampDockWidth(newDockWidth));
     },
     [clampDockWidth, resizingPointerId]
@@ -39,17 +42,18 @@ export function Workbench() {
   const handlePointerUp = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
       if (resizingPointerId !== e.pointerId) return;
-      setResizingPointerId(null);
-
-      if (dockWidthDraft !== null) {
-        setDockWidth(dockWidthDraft);
-        setDockWidthDraft(null);
-      }
 
       try {
         e.currentTarget.releasePointerCapture(e.pointerId);
       } catch {
         // no-op
+      }
+
+      setResizingPointerId(null);
+
+      if (dockWidthDraft !== null) {
+        setDockWidth(dockWidthDraft);
+        setDockWidthDraft(null);
       }
     },
     [dockWidthDraft, resizingPointerId, setDockWidth]
@@ -57,6 +61,7 @@ export function Workbench() {
 
   return (
     <div
+      ref={containerRef}
       className={`flex h-screen w-full bg-background ${isResizing ? "select-none" : ""}`}
     >
       {/* Left Canvas */}
