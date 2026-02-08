@@ -117,6 +117,7 @@ See **References (primary docs)** and **Phase → references map** at the bottom
 - SQLite main-thread vs worker is deferred until after Phase 24, as requested.
 
 ## References (primary docs)
+These are a convenience index. If a phase doc adds/changes an external dependency, update this list + the map below to match.
 - Bun + Next.js: [Bun Next.js guide](https://bun.com/docs/guides/ecosystem/nextjs)
 - Next.js: [Next.js documentation](https://nextjs.org/docs)
 - Tailwind CSS: [Tailwind documentation](https://tailwindcss.com/docs)
