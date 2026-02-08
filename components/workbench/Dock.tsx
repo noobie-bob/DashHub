@@ -6,24 +6,15 @@ import { ChatThread } from "../chat/ChatThread";
 import { ChatComposer } from "../chat/ChatComposer";
 import { EventTimeline } from "../events/EventTimeline";
 import { MessageSquare, FileBox, Server, Database, Clock } from "lucide-react";
-import { useStore, type UIState } from "@/lib/store";
-import { useEffect } from "react";
+import { useStore, DOCK_TABS, type DockTab } from "@/lib/store";
 
 export function Dock() {
   const { state, setActiveDockTab } = useStore();
   const apiKey = process.env.NEXT_PUBLIC_TAMBO_API_KEY;
   const hasTambo = Boolean(apiKey);
-  const activeDockTab = state.ui.activeDockTab;
+  const activeDockTab: DockTab = !hasTambo && state.ui.activeDockTab === "chat" ? "events" : state.ui.activeDockTab;
 
-  const isDockTab = (tab: string): tab is UIState["activeDockTab"] => {
-    return tab === "chat" || tab === "events" || tab === "artifacts" || tab === "mcp" || tab === "db";
-  };
-
-  useEffect(() => {
-    if (hasTambo) return;
-    if (activeDockTab !== "chat") return;
-    setActiveDockTab("events");
-  }, [activeDockTab, hasTambo, setActiveDockTab]);
+  const isDockTab = (tab: string): tab is DockTab => (DOCK_TABS as readonly string[]).includes(tab);
 
   return (
     <div className="flex h-full flex-col bg-background">

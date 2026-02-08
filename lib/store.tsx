@@ -3,10 +3,13 @@
 import React, { createContext, useContext, useState, useCallback, type ReactNode } from "react";
 import { type EventRecord, createEvent, type EventKind, type EventRefs } from "./events";
 
+export const DOCK_TABS = ["chat", "events", "artifacts", "mcp", "db"] as const;
+export type DockTab = (typeof DOCK_TABS)[number];
+
 // UI State
 export interface UIState {
   dockWidth: number;
-  activeDockTab: "chat" | "events" | "artifacts" | "mcp" | "db";
+  activeDockTab: DockTab;
 }
 
 // Session State
@@ -27,14 +30,22 @@ const defaultState: SessionState = {
   events: [],
   ui: {
     dockWidth: 400,
-    activeDockTab: "chat",
+    activeDockTab: "events",
   },
 };
 
 const StoreContext = createContext<StoreContextType | null>(null);
 
 export function StoreProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<SessionState>(defaultState);
+  const hasTambo = Boolean(process.env.NEXT_PUBLIC_TAMBO_API_KEY);
+
+  const [state, setState] = useState<SessionState>(() => ({
+    ...defaultState,
+    ui: {
+      ...defaultState.ui,
+      activeDockTab: hasTambo ? "chat" : "events",
+    },
+  }));
 
   const recordEvent = useCallback(
     (kind: EventKind, data: { inputs?: unknown; outputs?: unknown }, refs?: EventRefs): EventRecord => {
