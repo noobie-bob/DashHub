@@ -34,7 +34,9 @@ interface StoreContextType {
   setDockWidth: (width: number) => void;
 }
 
-const MAX_EVENTS = 1000;
+// Keep the in-memory event ledger bounded to avoid unbounded growth.
+// Oldest events are dropped once the cap is reached.
+const MAX_SESSION_EVENTS = 1000;
 
 const defaultState: SessionState = {
   events: [],
@@ -61,8 +63,8 @@ export function StoreProvider({ children, hasTambo }: { children: ReactNode; has
       setState((prev) => {
         const prevEvents = prev.events;
         const nextEvents =
-          prevEvents.length >= MAX_EVENTS
-            ? [...prevEvents.slice(prevEvents.length - MAX_EVENTS + 1), event]
+          prevEvents.length >= MAX_SESSION_EVENTS
+            ? [...prevEvents.slice(prevEvents.length - MAX_SESSION_EVENTS + 1), event]
             : [...prevEvents, event];
         return {
           ...prev,
