@@ -12,7 +12,8 @@ export function Dock() {
   const { state, setActiveDockTab, hasTambo } = useStore();
   const activeDockTab: DockTab = state.ui.activeDockTab;
 
-  const isDockTab = (tab: string): tab is DockTab => DOCK_TABS.includes(tab as DockTab);
+  const dockTabs: readonly string[] = DOCK_TABS;
+  const isDockTab = (tab: string): tab is DockTab => dockTabs.includes(tab);
 
   return (
     <div className="flex h-full flex-col bg-background">

@@ -9,7 +9,7 @@ export type DockTab = (typeof DOCK_TABS)[number];
 export const DOCK_WIDTH_MIN = 280;
 export const DOCK_WIDTH_MAX = 600;
 
-function clampDockWidth(width: number): number {
+export function clampDockWidth(width: number): number {
   return Math.max(DOCK_WIDTH_MIN, Math.min(DOCK_WIDTH_MAX, width));
 }
 
@@ -37,7 +37,7 @@ interface StoreContextType {
 const defaultState: SessionState = {
   events: [],
   ui: {
-    dockWidth: 400,
+    dockWidth: clampDockWidth(400),
     activeDockTab: "events",
   },
 };
@@ -69,11 +69,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const setActiveDockTab = useCallback(
     (tab: UIState["activeDockTab"]) => {
-      const nextTab = !hasTambo && tab === "chat" ? "events" : tab;
+      if (!hasTambo && tab === "chat") return;
 
       setState((prev) => ({
         ...prev,
-        ui: { ...prev.ui, activeDockTab: nextTab },
+        ui: { ...prev.ui, activeDockTab: tab },
       }));
     },
     [hasTambo]

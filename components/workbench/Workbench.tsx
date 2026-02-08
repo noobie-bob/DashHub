@@ -3,7 +3,7 @@
 import { Canvas } from "./Canvas";
 import { Dock } from "./Dock";
 import { useState, useCallback, useRef } from "react";
-import { DOCK_WIDTH_MAX, DOCK_WIDTH_MIN, useStore } from "@/lib/store";
+import { clampDockWidth, useStore } from "@/lib/store";
 
 export function Workbench() {
   const { state, setDockWidth } = useStore();
@@ -12,12 +12,8 @@ export function Workbench() {
   const isResizing = resizingPointerId !== null;
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const clampDockWidth = useCallback((width: number) => {
-    return Math.max(DOCK_WIDTH_MIN, Math.min(DOCK_WIDTH_MAX, width));
-  }, []);
-
-  const persistedDockWidth = clampDockWidth(state.ui.dockWidth);
-  const dockWidth = clampDockWidth(dockWidthDraft ?? persistedDockWidth);
+  const persistedDockWidth = state.ui.dockWidth;
+  const dockWidth = dockWidthDraft ?? persistedDockWidth;
 
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
@@ -38,7 +34,7 @@ export function Workbench() {
       const newDockWidth = containerRect.right - e.clientX;
       setDockWidthDraft(clampDockWidth(newDockWidth));
     },
-    [clampDockWidth, resizingPointerId]
+    [resizingPointerId]
   );
 
   const handlePointerUp = useCallback(
@@ -58,7 +54,7 @@ export function Workbench() {
         setDockWidthDraft(null);
       }
     },
-    [clampDockWidth, dockWidthDraft, resizingPointerId, setDockWidth]
+    [dockWidthDraft, resizingPointerId, setDockWidth]
   );
 
   return (
