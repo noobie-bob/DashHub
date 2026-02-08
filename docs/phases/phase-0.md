@@ -10,8 +10,8 @@
 
 By the end of Phase 0 you will have:
 
-- A **Next.js + TypeScript** app running under **Bun runtime** in dev mode (not Node). [1](https://bun.sh/docs/guides/ecosystem/nextjs)[2](https://bun.sh/docs/runtime/overview)
-- **Tambo** installed and wired at least at the Provider level (even if the UI is minimal). [3](https://github.com/tambo-ai/tambo)[4](https://www.npmjs.com/package/@tambo-ai/react)
+- A **Next.js + TypeScript** app running under **Bun runtime** in dev mode (not Node). (Bun Next.js guide: https://bun.sh/docs/guides/ecosystem/nextjs)
+- **Tambo** installed and wired at least at the Provider level (even if the UI is minimal). (Package: https://www.npmjs.com/package/@tambo-ai/react)
 - **Tailwind CSS** configured and a minimal design system baseline with **shadcn/ui + Radix UI**.
 - A consistent set of **engineering conventions**: linting/formatting, typed env loading, and a “phase-ready” docs workflow.
 
@@ -19,16 +19,18 @@ By the end of Phase 0 you will have:
 
 ## 0.2 Architecture (1–2 lines)
 
-- **Runtime:** Bun executes Next.js (`bun --bun`) for development and scripts, providing a fast TS/JS toolchain. [1](https://bun.sh/docs/guides/ecosystem/nextjs)[2](https://bun.sh/docs/runtime/overview)
-- **Generative UI:** Tambo runs the agent loop; you register UI components with Zod schemas and Tambo renders the resulting UI/tool calls. [3](https://github.com/tambo-ai/tambo)[4](https://www.npmjs.com/package/@tambo-ai/react)
+- **Runtime:** Bun executes Next.js (`bun --bun`) for development and scripts.
+- **Generative UI:** Tambo runs the agent loop; you register UI components and tools with schemas and Tambo renders the results.
 
 ---
 
 ## 0.3 Key Decisions (record these now)
 
-1. **Single-user prototype**: no auth, no multi-tenant.
-2. **SQLite upload is session-only and in-memory** (no persistence); implementation begins in Phase 24.
-3. **MCP connections are client-side** (browser → MCP server). This implies CORS and network accessibility are needed for MCP servers. [5](https://modelcontextprotocol.io/docs/)[6](https://github.com/modelcontextprotocol/modelcontextprotocol)
+These decisions are tracked in `docs/architecture/decisions.md`:
+
+1. [DEC-0001 — Single-user prototype](../architecture/decisions.md#dec-0001--single-user-prototype)
+2. [DEC-0002 — Session-only, in-memory SQLite upload](../architecture/decisions.md#dec-0002--session-only-in-memory-sqlite-upload)
+3. [DEC-0003 — Client-side MCP connections](../architecture/decisions.md#dec-0003--client-side-mcp-connections)
 
 ---
 
@@ -36,7 +38,7 @@ By the end of Phase 0 you will have:
 
 ### A) Ensure Bun runtime is used for Next.js
 
-Bun’s Next.js guide recommends running Next using Bun’s runtime by prefixing scripts with `bun --bun`. [1](https://bun.sh/docs/guides/ecosystem/nextjs)[2](https://bun.sh/docs/runtime/overview)
+Bun’s Next.js guide recommends running Next using Bun’s runtime by prefixing scripts with `bun --bun`.
 
 **Tasks:**
 - Initialize Next.js if not already present.
@@ -69,15 +71,34 @@ Update `package.json` scripts:
 
 This guarantees Bun executes the Next.js CLI.
 
+**Verify:**
+
+```bash
+bun --version
+bun install
+bun dev
+```
+
 ---
 
 ### B) Install and Baseline Tailwind CSS
 
-**Tasks**
+If you used `bun create next-app@latest .` and selected Tailwind, Tailwind should already be configured.
 
-- Install Tailwind CSS, PostCSS, and Autoprefixer
-- Initialize Tailwind configuration
-- Add base Tailwind directives to the global CSS file
+If you need to add Tailwind to an existing Next.js app:
+
+```bash
+bun add -d tailwindcss postcss autoprefixer
+bunx tailwindcss init -p
+```
+
+Ensure your global CSS includes the Tailwind directives (typically in `app/globals.css` or `src/app/globals.css`):
+
+```css
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+```
 
 **Outcome:** Tailwind styles apply correctly in development.
 
@@ -85,14 +106,17 @@ This guarantees Bun executes the Next.js CLI.
 
 ### C) Add shadcn/ui + Radix UI Baseline
 
-**Tasks**
+Initialize shadcn/ui:
 
-- Set up shadcn/ui
-- Ensure Radix UI primitives are available
-- Define:
-  - Global typography
-  - Theme tokens (light and dark)
-  - Base layout spacing rules
+```bash
+bunx shadcn@latest init
+```
+
+Then add a couple of components to prove the baseline works:
+
+```bash
+bunx shadcn@latest add button input dialog tabs toast
+```
 
 **Deliverable**
 
@@ -108,13 +132,19 @@ A minimal Design System Baseline Page demonstrating 3–5 primitives, such as:
 
 ### D) Add Tambo and Verify Provider Wiring
 
-Tambo is a generative UI toolkit for React that manages agent state, streaming, and MCP interactions. [3](https://github.com/tambo-ai/tambo)
+Tambo is a generative UI toolkit for React that manages agent state, streaming, and MCP interactions.
 
 **Tasks**
 
 - Install `@tambo-ai/react`
 - Mount `TamboProvider` at the application root
 - Render a minimal thread UI using Tambo hooks (thread + input)
+
+**Commands:**
+
+```bash
+bun add @tambo-ai/react zod
+```
 
 **Outcome:** Messages render and flow through Tambo, even without custom component registration.
 
@@ -140,13 +170,18 @@ Create the following files and directories to enable deterministic generation in
 
 ```
 docs/
-├─ phases/
-│  ├─ phase-0.md   (this document)
-│  └─ phase-1.md
-└─ llm/
-   ├─ llm.txt          (stub placeholder)
-   ├─ claude.skills    (stub placeholder)
-   └─ agent.skills     (stub placeholder)
+├─ architecture/
+│  └─ decisions.md
+├─ llm/
+│  ├─ README.md
+│  ├─ llm.txt
+│  ├─ claude.skills
+│  ├─ agent.skills
+│  └─ templates/
+│     └─ planning-spec.md
+└─ phases/
+   ├─ phase-0.md   (this document)
+   └─ phase-1.md
 ```
 
 ---
@@ -159,6 +194,7 @@ Phase 0 is complete when all of the following are true:
 - Tailwind styles apply and hot-reload correctly
 - At least one shadcn/Radix component renders (e.g., Dialog or Tabs)
 - `TamboProvider` is mounted and a basic thread UI renders messages
+- `docs/architecture/decisions.md` exists and Phase 0 links to it
 - `docs/phases/phase-0.md` and `docs/phases/phase-1.md` exist in the repo
 
 ---

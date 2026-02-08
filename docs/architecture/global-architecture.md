@@ -1,8 +1,3 @@
----
-
-# ✅ `docs/architecture/global-architecture.md`
-
-
 # Global Architecture (applies to every phase)
 
 This document describes the **stable backbone** of the system. All phases must preserve these concepts.
@@ -22,7 +17,7 @@ This document describes the **stable backbone** of the system. All phases must p
 ### 2) Tambo Agent Runtime
 - `TamboProvider` is mounted at the app root.
 - You register **components** (with Zod props schemas) and **tools** (schema-defined functions).
-- The agent selects a component or tool based on the user request; **Tambo streams props and renders the result**. [3](https://github.com/tambo-ai/tambo)[4](https://www.npmjs.com/package/@tambo-ai/react)
+- The agent selects a component or tool based on the user request; **Tambo streams props and renders the result**. (Package: https://www.npmjs.com/package/@tambo-ai/react)
 
 **Intent:** The agent should never render arbitrary UI; it must only use your registered components/tools.
 
@@ -52,7 +47,7 @@ Every meaningful action becomes an **event record**:
 
 ### 5) MCP Manager (client-side)
 - The browser connects directly to MCP servers (client-side integration).
-- This implies MCP servers must be reachable and often require CORS when cross-origin. [5](https://modelcontextprotocol.io/docs/)[6](https://github.com/modelcontextprotocol/modelcontextprotocol)
+- This implies MCP servers must be reachable and often require CORS when cross-origin. (Spec: https://modelcontextprotocol.io/specification/2025-06-18)
 
 **Intent:** MCP adds external capabilities (tools/resources/prompts), but must remain user-controlled and observable.
 

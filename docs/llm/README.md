@@ -5,10 +5,10 @@ This folder contains **LLM control files** that you can feed into Claude/agent r
 The goal is to keep generation deterministic and architecture-consistent while building a **single-user** prototype of a **Generative UI Dashboard** using:
 
 - **Next.js + TypeScript**
-- **Bun** runtime (`bun --bun next dev/build/start`) [1](https://bun.sh/docs/guides/ecosystem/nextjs)[2](https://bun.sh/docs/runtime/overview)
+- **Bun** runtime (`bun --bun next dev/build/start`) (Bun Next.js guide: https://bun.sh/docs/guides/ecosystem/nextjs)
 - **Tailwind + shadcn/ui + Radix UI** (app chrome)
-- **Tambo** for generative UI (component registration with Zod → agent tool definitions → Tambo renders & streams props) [3](https://github.com/tambo-ai/tambo)[4](https://www.npmjs.com/package/@tambo-ai/react)
-- **MCP** (Model Context Protocol) integrations **client-side** (browser → MCP server) [5](https://modelcontextprotocol.io/docs/)[6](https://github.com/modelcontextprotocol/modelcontextprotocol)
+- **Tambo** for generative UI (https://www.npmjs.com/package/@tambo-ai/react)
+- **MCP** (Model Context Protocol) integrations **client-side** (browser → MCP server) (spec: https://modelcontextprotocol.io/specification/2025-06-18, repo: https://github.com/modelcontextprotocol/modelcontextprotocol)
 
 ---
 
@@ -74,3 +74,6 @@ Rules:
 - Implement ONLY the current phase.
 - Preserve architecture invariants.
 - Emit Event Ledger entries for new actions.
+```
+
+If you want a more structured output, use the planning template at `docs/llm/templates/planning-spec.md`.

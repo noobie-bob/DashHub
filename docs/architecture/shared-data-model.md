@@ -2,18 +2,20 @@
 
 You do NOT need to implement all fields in Phase 1. This describes the **target shape** the codebase should converge on.
 
+Treat the field names in this document as canonical. Other docs should reference this file rather than redefining model shapes.
+
 ---
 
 ## Artifacts (session memory)
 
 ### Base fields
-- `artifactId: string`
+- `id: string`
 - `type: ArtifactType`
 - `title: string`
 - `createdAt: number`
 - `source: 'userUpload' | 'toolOutput' | 'mcpResult'`
 - `payload`: type-specific (keep large data in memory)
-- `derivedFrom?: string[]` (artifactIds)
+- `derivedFrom?: string[]` (artifact IDs)
 - `relationships?: Record<string, string[]>`
 
 ### Artifact types introduced gradually
@@ -30,8 +32,8 @@ You do NOT need to implement all fields in Phase 1. This describes the **target 
 ## Events (Provenance Ledger)
 
 ### Base fields
-- `eventId: string`
-- `timestamp: number`
+- `id: string`
+- `ts: number`
 - `kind: EventKind`
 - `inputs?: unknown`
 - `outputs?: unknown`
@@ -51,14 +53,14 @@ You do NOT need to implement all fields in Phase 1. This describes the **target 
 ## Canvas Widgets
 
 ### WidgetInstance
-- `widgetId: string`
+- `id: string`
 - `componentName: string`
 - `mode: 'generative' | 'interactable'`
 - `props: unknown` (validated if Tambo component)
 - `boundArtifacts?: string[]`
-- `layoutMeta?: { x?: number; y?: number; w?: number; h?: number; sectionId?: string }`
+- `layout?: { x?: number; y?: number; w?: number; h?: number; sectionId?: string }`
 
 ---
 
 ## Why this model fits Tambo
-Tambo’s model is built around schema-defined components/tools. You register the UI components with Zod schemas and Tambo renders/streams validated props. [3](https://github.com/tambo-ai/tambo)[4](https://www.npmjs.com/package/@tambo-ai/react)
+Tambo’s model is built around schema-defined components/tools. You register the UI components with schemas and Tambo renders validated props.

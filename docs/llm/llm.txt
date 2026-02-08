@@ -8,16 +8,16 @@ The app is a split-screen workbench:
 Tambo is the generative UI engine:
 - We register React components with Zod prop schemas.
 - These schemas become tool definitions for the LLM agent to call.
-- Tambo streams props and renders the resulting components inside messages. [1](https://github.com/tambo-ai/tambo)[2](https://www.npmjs.com/package/@tambo-ai/react)
+- Tambo streams props and renders the resulting components inside messages. (Package: https://www.npmjs.com/package/@tambo-ai/react)
 
 Runtime:
-- Use Bun to run Next.js (dev/build/start executed as `bun --bun next ...`). [3](https://bun.sh/docs/guides/ecosystem/nextjs)[4](https://bun.sh/docs/runtime/overview)
+- Use Bun to run Next.js (dev/build/start executed as `bun --bun next ...`). (Bun Next.js guide: https://bun.sh/docs/guides/ecosystem/nextjs)
 
 Scope constraints:
 - Single user only. No auth. No multi-tenant. No team features.
 - Scale/load not considered.
-- SQLite upload is in-memory for the session only (no disk persistence). For this we will use sql.js (SQLite compiled to WASM/JS) when we reach Phase 24+. [5](https://sql.js.org/)[6](https://github.com/sql-js/sql.js)
-- MCP is client-side (browser -> MCP server). This requires reachable servers and CORS if cross-origin. [7](https://modelcontextprotocol.io/docs/)[8](https://github.com/modelcontextprotocol/modelcontextprotocol)
+- SQLite upload is in-memory for the session only (no disk persistence). For this we will use sql.js (SQLite compiled to WASM/JS) when we reach Phase 24+. (Project: https://github.com/sql-js/sql.js)
+- MCP is client-side (browser -> MCP server). This requires reachable servers and CORS if cross-origin. (Spec: https://modelcontextprotocol.io/specification/2025-06-18)
 
 Non-goals (until later):
 - Perf optimization, background queues, multi-user permissions, enterprise security hardening.
@@ -68,7 +68,7 @@ The system is built on 5 primitives:
 
 Tambo-specific rule:
 - The AI must ONLY render registered components or call registered tools.
-- Component props must validate against their Zod schema. [1](https://github.com/tambo-ai/tambo)[2](https://www.npmjs.com/package/@tambo-ai/react)
+- Component props must validate against their schema.
 
 ------------------------------------------------------------
 C) DATA MODELS (TYPE-FIRST)
@@ -77,17 +77,17 @@ C) DATA MODELS (TYPE-FIRST)
 Use TypeScript types/interfaces and Zod where appropriate.
 
 Artifact (minimum):
-- artifactId: string
+- id: string
 - type: 'file' | 'text' | 'dataset' | 'image' | 'db' | 'schema' | 'queryResult' | ...
 - title: string
 - createdAt: number
 - source: 'userUpload' | 'toolOutput' | 'mcpResult'
 - payload: (type-specific, keep minimal; for large data store in memory, not localStorage)
-- derivedFrom?: artifactId[]
+- derivedFrom?: string[]
 - meta?: Record<string, unknown>
 
 EventRecord (minimum):
-- eventId: string
+- id: string
 - ts: number
 - kind: string (e.g., 'message.sent', 'artifact.created', 'tool.called', 'pin.created')
 - refs?: { artifactIds?: string[]; widgetIds?: string[]; messageIds?: string[]; mcpServerId?: string }
@@ -95,7 +95,7 @@ EventRecord (minimum):
 - outputs?: unknown
 
 WidgetInstance (minimum):
-- widgetId: string
+- id: string
 - componentName: string (registered Tambo component name OR internal canvas widget type)
 - mode: 'generative' | 'interactable'
 - props: unknown (validated by Zod schema if Tambo component)
@@ -119,8 +119,8 @@ E) MCP RULES (CLIENT-SIDE)
 ------------------------------------------------------------
 
 - MCP server configs are stored client-side (localStorage) and applied at runtime.
-  Reference pattern: “MCP integration system stored in localStorage, configuration UI, runtime wiring into Tambo.” [7](https://modelcontextprotocol.io/docs/)
-- MCP transport uses JSON-RPC over Streamable HTTP; origin/security considerations apply. [8](https://github.com/modelcontextprotocol/modelcontextprotocol)
+  Reference pattern: “MCP integration system stored in localStorage, configuration UI, runtime wiring into Tambo.”
+- MCP is JSON-RPC based; origin/security considerations apply.
 
 MCP Safety UX (when implemented):
 - Any MCP tool call must require explicit user approval.
@@ -133,17 +133,17 @@ F) FILE INGESTION (OSS FIRST)
 
 When we reach ingestion phases, use proven OSS libraries:
 
-- PDF text extraction: PDF.js (pdfjs-dist) using getTextContent(). [9](https://github.com/mozilla/pdf.js)[10](https://www.npmjs.com/package/pdfjs-dist)
-- OCR in browser: tesseract.js (prefer worker-based execution). [11](https://github.com/naptha/tesseract.js)[12](https://tesseract.projectnaptha.com/)
-- Excel (.xlsx): SheetJS xlsx read/parse into rows/columns. [13](https://github.com/SheetJS/sheetjs)[14](https://docs.sheetjs.com/)
-- Word (.docx): mammoth.js extractRawText/convertToHtml. [15](https://github.com/mwilliamson/mammoth.js)[16](https://www.npmjs.com/package/mammoth)
+- PDF text extraction: PDF.js (https://github.com/mozilla/pdf.js)
+- OCR in browser: tesseract.js (https://github.com/naptha/tesseract.js)
+- Excel (.xlsx): SheetJS (https://docs.sheetjs.com)
+- Word (.docx): mammoth.js (https://github.com/mwilliamson/mammoth.js)
 
 ------------------------------------------------------------
 G) SQLITE (PHASE 24+)
 ------------------------------------------------------------
 
 - SQLite is loaded from uploaded .sqlite bytes and kept in-memory for the session.
-- Use sql.js to import an existing sqlite file into memory and query it in the browser. [5](https://sql.js.org/)[6](https://github.com/sql-js/sql.js)
+- Use sql.js to import an existing sqlite file into memory and query it in the browser. (Project: https://github.com/sql-js/sql.js)
 - Defer the decision of main-thread vs worker execution until after Phase 24.
 
 ------------------------------------------------------------

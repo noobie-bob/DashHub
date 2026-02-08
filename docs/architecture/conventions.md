@@ -25,7 +25,7 @@ Everything is typed:
 
 ## Agent-exposed actions are Tools
 - All agent-exposed actions must be schema-defined tools (Zod input/output).
-- Tools are compatible with Tambo’s model of schema-defined actions. [3](https://github.com/tambo-ai/tambo)[4](https://www.npmjs.com/package/@tambo-ai/react)
+- Tools are compatible with Tambo’s model of schema-defined actions. (Package: https://www.npmjs.com/package/@tambo-ai/react)
 
 ---
 
@@ -33,7 +33,7 @@ Everything is typed:
 - Generative widgets render once in response to a message.
 - Interactable widgets persist and update by ID.
 
-Tambo supports both patterns for generative UI. [3](https://github.com/tambo-ai/tambo)[4](https://www.npmjs.com/package/@tambo-ai/react)
+Tambo supports both patterns for generative UI.
 
 ---
 
@@ -45,11 +45,11 @@ Tambo supports both patterns for generative UI. [3](https://github.com/tambo-ai/
 ---
 
 ## Bun runtime discipline
-- Run Next via Bun runtime scripts using `bun --bun next ...`. [1](https://bun.sh/docs/guides/ecosystem/nextjs)
+- Run Next via Bun runtime scripts using `bun --bun next ...`. (Bun Next.js guide: https://bun.sh/docs/guides/ecosystem/nextjs)
 
 ---
 
 ## MCP discipline (client-side)
 - Store MCP server configs in browser localStorage (prototype).
 - Require explicit approvals for MCP tool calls and record provenance.
-- Be mindful of Streamable HTTP transport considerations. [5](https://modelcontextprotocol.io/docs/)[6](https://github.com/modelcontextprotocol/modelcontextprotocol)
+- Be mindful of transport and origin/security considerations. (Spec: https://modelcontextprotocol.io/specification/2025-06-18)

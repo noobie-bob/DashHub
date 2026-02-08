@@ -31,7 +31,7 @@ See **References (primary docs)** and **Phase → references map** at the bottom
 - Inspectable events, filters, details panel.
 
 ### Phase 4 — Register first Tambo generative widgets
-- SummaryCard, DataTable, Graph with Zod schemas.
+- SummaryCard, DataTable, Graph with schemas.
 
 ### Phase 5 — Interactable TaskBoard
 - Persistent task widget updated by ID.
@@ -118,13 +118,13 @@ See **References (primary docs)** and **Phase → references map** at the bottom
 
 ## References (primary docs)
 These are a convenience index. If a phase doc adds/changes an external dependency, update this list + the map below to match.
-- Bun + Next.js: [Bun Next.js guide](https://bun.com/docs/guides/ecosystem/nextjs)
+- Bun + Next.js: [Bun Next.js guide](https://bun.sh/docs/guides/ecosystem/nextjs)
 - Next.js: [Next.js documentation](https://nextjs.org/docs)
 - Tailwind CSS: [Tailwind documentation](https://tailwindcss.com/docs)
 - shadcn/ui: [shadcn/ui documentation](https://ui.shadcn.com/docs)
 - Radix UI: [Radix UI primitives documentation](https://www.radix-ui.com/primitives/docs/overview/introduction)
 - Tambo React package: [@tambo-ai/react on npm](https://www.npmjs.com/package/@tambo-ai/react)
-- Model Context Protocol spec: [MCP specification](https://modelcontextprotocol.io/specification)
+- Model Context Protocol spec: [MCP specification](https://modelcontextprotocol.io/specification/2025-06-18)
 - MCP reference implementation: [modelcontextprotocol/modelcontextprotocol](https://github.com/modelcontextprotocol/modelcontextprotocol)
 - PDF.js: [mozilla/pdf.js](https://github.com/mozilla/pdf.js)
 - Tesseract.js: [naptha/tesseract.js](https://github.com/naptha/tesseract.js)
