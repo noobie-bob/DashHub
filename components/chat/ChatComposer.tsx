@@ -1,0 +1,51 @@
+"use client";
+
+import { useTamboThreadInput } from "@tambo-ai/react";
+import { Input } from "../ui/input";
+import { Button } from "../ui/button";
+import { Send, Loader2 } from "lucide-react";
+import { useCallback } from "react";
+
+export function ChatComposer() {
+  const { value, setValue, submit, isPending } = useTamboThreadInput();
+
+  const handleSubmit = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      if (value.trim() && !isPending) {
+        submit({ streamResponse: true });
+      }
+    },
+    [value, isPending, submit]
+  );
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        handleSubmit(e as unknown as React.FormEvent);
+      }
+    },
+    [handleSubmit]
+  );
+
+  return (
+    <form onSubmit={handleSubmit} className="flex gap-2">
+      <Input
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onKeyDown={handleKeyDown}
+        placeholder="Type a message..."
+        disabled={isPending}
+        className="flex-1"
+      />
+      <Button type="submit" size="icon" disabled={!value.trim() || isPending}>
+        {isPending ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <Send className="h-4 w-4" />
+        )}
+      </Button>
+    </form>
+  );
+}

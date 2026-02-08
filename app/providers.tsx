@@ -1,6 +1,7 @@
 "use client";
 
 import { TamboProvider } from "@tambo-ai/react";
+import { StoreProvider } from "@/lib/store";
 
 export function Providers({
   children,
@@ -17,7 +18,7 @@ export function Providers({
     console.error("Missing NEXT_PUBLIC_TAMBO_API_KEY");
 
     return (
-      <>
+      <StoreProvider>
         <div
           role="alert"
           className="mx-auto my-4 w-fit rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900"
@@ -26,9 +27,13 @@ export function Providers({
           features are disabled.
         </div>
         {children}
-      </>
+      </StoreProvider>
     );
   }
 
-  return <TamboProvider apiKey={apiKey}>{children}</TamboProvider>;
+  return (
+    <TamboProvider apiKey={apiKey}>
+      <StoreProvider>{children}</StoreProvider>
+    </TamboProvider>
+  );
 }
