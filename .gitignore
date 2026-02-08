@@ -31,11 +31,13 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # env files
-# Ignore real env files, but keep non-secret templates in version control
+# All non-`.example` env files are treated as secrets and must never be committed
 .env
 .env.*
 .env*.local
-# NOTE: keep `!` rules below the env ignore rules so they stay tracked
+
+# IMPORTANT: this must stay after the env ignore rules above
+# to ensure example templates remain tracked.
 !.env*.example
 
 # vercel
