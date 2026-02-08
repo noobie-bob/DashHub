@@ -11,7 +11,7 @@ Tambo is the generative UI engine:
 - Tambo streams props and renders the resulting components inside messages. (Package: https://www.npmjs.com/package/@tambo-ai/react)
 
 Runtime:
-- Use Bun to run Next.js (dev/build/start executed as `bun --bun next ...`). (Bun Next.js guide: https://bun.sh/docs/guides/ecosystem/nextjs)
+- Use Bun to run Next.js (dev/build/start executed as `bun run ...`). (Bun Next.js guide: https://bun.sh/docs/guides/ecosystem/nextjs)
 
 Scope constraints:
 - Single user only. No auth. No multi-tenant. No team features.

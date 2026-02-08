@@ -22,7 +22,7 @@ Your job is to generate high-quality code and phase deliverables incrementally.
   - React Flow for ERD (https://reactflow.dev)
 
 4) Bun runtime:
-- Always provide commands that run Next via Bun runtime (`bun --bun next dev/build/start`). (Bun Next.js guide: https://bun.sh/docs/guides/ecosystem/nextjs)
+- Always provide commands that run Next via Bun runtime (`bun run dev/build/start`). (Bun Next.js guide: https://bun.sh/docs/guides/ecosystem/nextjs)
 
 ## Architecture Responsibilities (what you must preserve)
 - Workbench split: Canvas (left) vs Dock (right)
