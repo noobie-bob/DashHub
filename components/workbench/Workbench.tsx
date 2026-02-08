@@ -73,16 +73,22 @@ export function Workbench() {
 
       {/* Resize Handle */}
       <div
-        className={`w-1 cursor-col-resize transition-colors ${
-          isResizing ? "bg-primary/50" : "bg-border hover:bg-primary/30"
-        }`}
+        className="group relative w-2 cursor-col-resize"
         style={{ touchAction: "none" }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerUp}
         onLostPointerCapture={handlePointerUp}
-      />
+      >
+        <div
+          className={`absolute inset-y-0 left-1/2 w-px -translate-x-1/2 transition-colors ${
+            isResizing
+              ? "bg-primary/50"
+              : "bg-border group-hover:bg-primary/30"
+          }`}
+        />
+      </div>
 
       {/* Right Dock */}
       <div
