@@ -49,6 +49,16 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function safeStringify(value: unknown, { indent = 0 }: { indent?: number } = {}): string {
+  if (value === undefined) return "undefined";
+  if (typeof value === "bigint") return `${value.toString()}n`;
+  if (typeof value === "symbol") return value.toString();
+  if (typeof value === "function") return value.name ? `[Function: ${value.name}]` : "[Function]";
+
+  if (value instanceof Date) return value.toISOString();
+  if (value instanceof RegExp) return value.toString();
+
+  if (typeof value !== "object" || value === null) return String(value);
+
   try {
     const seen = new WeakSet<object>();
     const serialized = JSON.stringify(
