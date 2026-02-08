@@ -59,11 +59,14 @@ export function StoreProvider({ children, hasTambo }: { children: ReactNode; has
     (kind: EventKind, data: { inputs?: unknown; outputs?: unknown }, refs?: EventRefs): EventRecord => {
       const event = createEvent(kind, data, refs);
       setState((prev) => {
-        const nextEvents = [...prev.events, event];
-        const nextLength = nextEvents.length;
+        const prevEvents = prev.events;
+        const nextEvents =
+          prevEvents.length >= MAX_EVENTS
+            ? [...prevEvents.slice(prevEvents.length - MAX_EVENTS + 1), event]
+            : [...prevEvents, event];
         return {
           ...prev,
-          events: nextLength > MAX_EVENTS ? nextEvents.slice(nextLength - MAX_EVENTS) : nextEvents,
+          events: nextEvents,
         };
       });
       return event;
