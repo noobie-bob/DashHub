@@ -1,6 +1,6 @@
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
-import oxlint from "eslint-plugin-oxlint";
+import oxlintPlugin from "eslint-plugin-oxlint";
 import { defineConfig, globalIgnores } from "eslint/config";
 
 export default defineConfig([
@@ -17,11 +17,11 @@ export default defineConfig([
 
   {
     plugins: {
-      oxlint,
+      oxlint: oxlintPlugin,
     },
   },
   // 👇 IMPORTANT: spread, don’t nest
-  ...oxlint.configs["flat/recommended"],
+  ...oxlintPlugin.configs["flat/recommended"],
 ]);
 
 

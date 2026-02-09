@@ -209,7 +209,7 @@ export function ChatThread() {
           </p>
         </div>
       ) : (
-        typedMessages.map((msg: ThreadMessage, index: number) => {
+        typedMessages.map((msg, index) => {
           const textContent = getMessageText(msg.content);
           const hideAssistantText = msg.role === "assistant" && hasComponent(msg);
 
@@ -400,7 +400,7 @@ function renderDataTable(toolName: string, args: unknown) {
       : null;
 
   const detail = Array.isArray(rows)
-    ? formatZodError(legacy.error)
+    ? `Legacy args invalid: ${formatZodError(legacy.error)}; modern args invalid: ${formatZodError(primary.error)}`
     : formatZodError(primary.error);
 
   return <InvalidToolArguments toolName={toolName} detail={detail} />;

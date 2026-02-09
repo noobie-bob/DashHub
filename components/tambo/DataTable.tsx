@@ -75,6 +75,90 @@ const DataTableRowsSchema = z.array(
 
 const WARN_INTERVAL_MS = 60_000;
 
+type DataTableParseWarn =
+  | { kind: "invalidJson"; detail: unknown }
+  | { kind: "wrongShape"; detail: unknown };
+
+type DataTableParseResult =
+  | { ok: true; rows: z.infer<typeof DataTableRowsSchema>; warn: null }
+  | { ok: false; error: string; warn: DataTableParseWarn | null };
+
+function parseDataTableRows(rows: string | unknown[]): DataTableParseResult {
+  if (Array.isArray(rows)) {
+    const result = DataTableRowsSchema.safeParse(rows);
+    if (!result.success) {
+      return {
+        ok: false,
+        error: "DataTable rows must be a JSON array of objects.",
+        warn: { kind: "wrongShape", detail: result.error },
+      };
+    }
+
+    return { ok: true, rows: result.data, warn: null };
+  }
+
+  if (typeof rows !== "string") {
+    return {
+      ok: false,
+      error: "DataTable rows must be a JSON array of objects.",
+      warn: { kind: "wrongShape", detail: rows },
+    };
+  }
+
+  try {
+    const parsed = JSON.parse(rows);
+    const result = DataTableRowsSchema.safeParse(parsed);
+    if (!result.success) {
+      return {
+        ok: false,
+        error: "DataTable rows must be a JSON array of objects.",
+        warn: { kind: "wrongShape", detail: result.error },
+      };
+    }
+
+    return { ok: true, rows: result.data, warn: null };
+  } catch (error) {
+    return {
+      ok: false,
+      error: "DataTable rows were not valid JSON.",
+      warn: { kind: "invalidJson", detail: error },
+    };
+  }
+}
+
+function logDataTableWarning(
+  parsedRows: DataTableParseResult,
+  lastWarnAtRef: { current: { invalidJson: number; wrongShape: number } }
+) {
+  if (parsedRows.ok || !parsedRows.warn) return;
+
+  if (process.env.NODE_ENV !== "production") {
+    if (parsedRows.warn.kind === "invalidJson") {
+      console.error("Failed to parse DataTable rows JSON:", parsedRows.warn.detail);
+      return;
+    }
+
+    console.error(
+      "DataTable rows JSON had an unexpected shape:",
+      parsedRows.warn.detail
+    );
+    return;
+  }
+
+  const now = Date.now();
+  const last = lastWarnAtRef.current[parsedRows.warn.kind];
+  if (now - last < WARN_INTERVAL_MS) return;
+
+  lastWarnAtRef.current[parsedRows.warn.kind] = now;
+
+  if (parsedRows.warn.kind === "invalidJson") {
+    console.warn("Failed to parse DataTable rows JSON.");
+    return;
+  }
+
+  console.warn("DataTable rows JSON had an unexpected shape.");
+}
+
 interface DataTableToolProps {
   title: string;
   columns: { key: string; label: string }[];
@@ -90,77 +174,10 @@ export function DataTableTool({
 }: DataTableToolProps) {
   const lastWarnAtRef = useRef({ invalidJson: 0, wrongShape: 0 });
 
-  const parsedRows = useMemo(() => {
-    if (Array.isArray(rows)) {
-      const result = DataTableRowsSchema.safeParse(rows);
-      if (!result.success) {
-        return {
-          ok: false,
-          error: "DataTable rows must be a JSON array of objects.",
-          warn: { kind: "wrongShape", detail: result.error },
-        } as const;
-      }
-
-      return { ok: true, rows: result.data, warn: null } as const;
-    }
-
-    if (typeof rows !== "string") {
-      return {
-        ok: false,
-        error: "DataTable rows must be a JSON array of objects.",
-        warn: { kind: "wrongShape", detail: rows },
-      } as const;
-    }
-
-    try {
-      const parsed = JSON.parse(rows);
-      const result = DataTableRowsSchema.safeParse(parsed);
-      if (!result.success) {
-        return {
-          ok: false,
-          error: "DataTable rows must be a JSON array of objects.",
-          warn: { kind: "wrongShape", detail: result.error },
-        } as const;
-      }
-
-      return { ok: true, rows: result.data, warn: null } as const;
-    } catch (error) {
-      return {
-        ok: false,
-        error: "DataTable rows were not valid JSON.",
-        warn: { kind: "invalidJson", detail: error },
-      } as const;
-    }
-  }, [rows]);
+  const parsedRows = useMemo(() => parseDataTableRows(rows), [rows]);
 
   useEffect(() => {
-    if (parsedRows.ok || !parsedRows.warn) return;
-
-    if (process.env.NODE_ENV !== "production") {
-      if (parsedRows.warn.kind === "invalidJson") {
-        console.error("Failed to parse DataTable rows JSON:", parsedRows.warn.detail);
-      } else {
-        console.error(
-          "DataTable rows JSON had an unexpected shape:",
-          parsedRows.warn.detail
-        );
-      }
-
-      return;
-    }
-
-    const now = Date.now();
-    const last = lastWarnAtRef.current[parsedRows.warn.kind];
-    if (now - last < WARN_INTERVAL_MS) return;
-
-    lastWarnAtRef.current[parsedRows.warn.kind] = now;
-
-    if (parsedRows.warn.kind === "invalidJson") {
-      console.warn("Failed to parse DataTable rows JSON.");
-      return;
-    }
-
-    console.warn("DataTable rows JSON had an unexpected shape.");
+    logDataTableWarning(parsedRows, lastWarnAtRef);
   }, [parsedRows]);
 
   if (!parsedRows.ok) {
