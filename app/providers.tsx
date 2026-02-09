@@ -8,6 +8,28 @@ import { Graph } from "@/components/tambo/Graph";
 import { SummaryCard } from "@/components/tambo/SummaryCard";
 import { DataTableSchema, GraphSchema, SummaryCardSchema } from "@/lib/schemas";
 
+const tamboComponents = [
+  {
+    name: "SummaryCard",
+    description:
+      "Use this tool to display a summary of content. Always prefer this over plain text when asked to summarize, list items, or provide a snapshot of information.",
+    component: SummaryCard,
+    propsSchema: SummaryCardSchema,
+  },
+  {
+    name: "DataTable",
+    description: "Display structured data in a table format with columns and rows.",
+    component: DataTable,
+    propsSchema: DataTableSchema,
+  },
+  {
+    name: "Graph",
+    description: "Display a simple chart (bar, line, or pie).",
+    component: Graph,
+    propsSchema: GraphSchema,
+  },
+];
+
 export function Providers({
   children,
 }: Readonly<{
@@ -15,29 +37,6 @@ export function Providers({
 }>) {
   const apiKey = process.env.NEXT_PUBLIC_TAMBO_API_KEY;
   const hasTambo = Boolean(apiKey);
-
-  const components = [
-    {
-      name: "SummaryCard",
-      description:
-        "Use this tool to display a summary of content. Always prefer this over plain text when asked to summarize, list items, or provide a snapshot of information.",
-      component: SummaryCard,
-      propsSchema: SummaryCardSchema,
-    },
-    {
-      name: "DataTable",
-      description:
-        "Display structured data in a table format with columns and rows.",
-      component: DataTable,
-      propsSchema: DataTableSchema,
-    },
-    {
-      name: "Graph",
-      description: "Display a simple chart (bar, line, or pie).",
-      component: Graph,
-      propsSchema: GraphSchema,
-    },
-  ];
 
   if (!apiKey) {
     if (process.env.NODE_ENV !== "production") {
@@ -61,7 +60,7 @@ export function Providers({
   }
 
   return (
-    <TamboProvider apiKey={apiKey} components={components}>
+    <TamboProvider apiKey={apiKey} components={tamboComponents}>
       <StoreProvider hasTambo={hasTambo}>{children}</StoreProvider>
     </TamboProvider>
   );
