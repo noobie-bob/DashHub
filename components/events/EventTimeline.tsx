@@ -509,21 +509,21 @@ function getEventPreview(event: EventRecord): string {
   if (event.kind === "message.sent" && typeof event.inputs === "string") {
     return event.inputs;
   }
-  if (event.kind === "message.sent" && event.inputs !== undefined) {
+  if (event.kind === "message.sent" && event.inputs !== undefined && event.inputs !== null) {
     return safePreview(event.inputs);
   }
   if (event.kind === "message.received" && typeof event.outputs === "string") {
     return event.outputs;
   }
-  if (event.kind === "message.received" && event.outputs !== undefined) {
+  if (event.kind === "message.received" && event.outputs !== undefined && event.outputs !== null) {
     return safePreview(event.outputs);
   }
 
   if (typeof event.inputs === "string") return event.inputs;
   if (typeof event.outputs === "string") return event.outputs;
 
-  if (event.inputs !== undefined) return safePreview(event.inputs);
-  if (event.outputs !== undefined) return safePreview(event.outputs);
+  if (event.inputs !== undefined && event.inputs !== null) return safePreview(event.inputs);
+  if (event.outputs !== undefined && event.outputs !== null) return safePreview(event.outputs);
 
   return "";
 }
@@ -592,7 +592,7 @@ function EventDetails({ event }: { event: EventRecord }) {
         </div>
       </div>
 
-      {event.inputs !== undefined && (
+      {event.inputs !== undefined && event.inputs !== null && (
         <div>
            <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1">Inputs</p>
           <pre className="text-xs font-mono text-foreground bg-background p-2 rounded border border-border overflow-auto max-h-40 whitespace-pre-wrap break-all">
@@ -600,7 +600,7 @@ function EventDetails({ event }: { event: EventRecord }) {
           </pre>
         </div>
       )}
-      {event.outputs !== undefined && (
+      {event.outputs !== undefined && event.outputs !== null && (
         <div>
            <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1">Outputs</p>
           <pre className="text-xs font-mono text-foreground bg-background p-2 rounded border border-border overflow-auto max-h-40 whitespace-pre-wrap break-all">
