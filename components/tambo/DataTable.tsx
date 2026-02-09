@@ -1,3 +1,7 @@
+"use client";
+
+import { useMemo } from "react";
+
 import {
   Table,
   TableBody,
@@ -8,10 +12,12 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
+type DataTableCellValue = string | number | boolean | null | undefined;
+
 interface DataTableProps {
   title: string;
   columns: { key: string; label: string }[];
-  rows: string | Record<string, string | number | boolean | null>[];
+  rows: string | Record<string, DataTableCellValue>[];
   maxRows?: number;
 }
 
@@ -21,21 +27,18 @@ export function DataTable({
   rows,
   maxRows = 5,
 }: DataTableProps) {
-  let parsedRows: Record<string, string | number | boolean | null>[] = [];
-
-  if (typeof rows === "string") {
-    try {
-      const parsed = JSON.parse(rows);
-      parsedRows = Array.isArray(parsed) ? parsed : [];
-    } catch (e) {
-      console.error("Failed to parse DataTable rows:", e);
-      parsedRows = [];
+  const parsedRows = useMemo((): Record<string, DataTableCellValue>[] => {
+    if (typeof rows === "string") {
+      try {
+        const parsed = JSON.parse(rows);
+        return Array.isArray(parsed) ? (parsed as Record<string, DataTableCellValue>[]) : [];
+      } catch {
+        return [];
+      }
     }
-  } else if (Array.isArray(rows)) {
-    parsedRows = rows;
-  } else {
-    parsedRows = [];
-  }
+
+    return Array.isArray(rows) ? rows : [];
+  }, [rows]);
 
   const safeColumns = columns || [];
   const displayRows = parsedRows.slice(0, maxRows);
@@ -61,7 +64,9 @@ export function DataTable({
               <TableRow key={`row-${i}`}>
                 {safeColumns.map((col, j) => (
                   <TableCell key={`cell-${i}-${col.key}-${j}`}>
-                    {row[col.key] !== null ? String(row[col.key]) : "-"}
+                    {row[col.key] === null || row[col.key] === undefined
+                      ? "-"
+                      : String(row[col.key])}
                   </TableCell>
                 ))}
               </TableRow>
