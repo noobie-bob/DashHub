@@ -3,7 +3,7 @@
 import { StoreProvider } from "@/lib/store";
 import { TamboProvider } from "@tambo-ai/react";
 
-import { DataTable } from "@/components/tambo/DataTable";
+import { DataTableTool } from "@/components/tambo/DataTable";
 import { Graph } from "@/components/tambo/Graph";
 import { SummaryCard } from "@/components/tambo/SummaryCard";
 import { DataTableSchema, GraphSchema, SummaryCardSchema } from "@/lib/schemas";
@@ -19,7 +19,7 @@ const tamboComponents = [
   {
     name: "DataTable",
     description: "Display structured data in a table format with columns and rows.",
-    component: DataTable,
+    component: DataTableTool,
     propsSchema: DataTableSchema,
   },
   {

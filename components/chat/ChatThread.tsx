@@ -3,10 +3,12 @@
 import { useTamboThread } from "@tambo-ai/react";
 import { User, Bot, Loader2 } from "lucide-react";
 import { useEffect, useRef } from "react";
+import { z } from "zod";
 import { useStore } from "@/lib/store";
 import { SummaryCard } from "@/components/tambo/SummaryCard";
-import { DataTable } from "@/components/tambo/DataTable";
+import { DataTableTool } from "@/components/tambo/DataTable";
 import { Graph } from "@/components/tambo/Graph";
+import { DataTableSchema, GraphSchema, SummaryCardSchema } from "@/lib/schemas";
 import ReactMarkdown from "react-markdown";
 
 // Helper to safely extract text content from message
@@ -43,6 +45,11 @@ export function ChatThread() {
   const seenMessageIdsRef = useRef<Set<string>>(new Set());
   const pendingAssistantMessageIdsRef = useRef<Set<string>>(new Set());
   const threadId = (thread as { id?: string } | null | undefined)?.id ?? null;
+  const eventsRef = useRef(state.events);
+
+  useEffect(() => {
+    eventsRef.current = state.events;
+  }, [state.events]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -54,6 +61,7 @@ export function ChatThread() {
   // Record events when messages change
   useEffect(() => {
     const messages = thread?.messages || [];
+    const typedMessages = messages as ThreadMessage[];
     const isGenerationSettled =
       generationStage === "IDLE" ||
       generationStage === "COMPLETE" ||
@@ -66,7 +74,7 @@ export function ChatThread() {
     }
 
     if (isGenerationSettled && pendingAssistantMessageIdsRef.current.size > 0) {
-      const messagesById = new Map(messages.map((m) => [m.id, m] as const));
+      const messagesById = new Map(typedMessages.map((m) => [m.id, m] as const));
 
       for (const id of Array.from(pendingAssistantMessageIdsRef.current)) {
         const msg = messagesById.get(id);
@@ -87,33 +95,35 @@ export function ChatThread() {
       }
     }
 
-    const existingEvents = state.events;
+    const existingEvents = eventsRef.current;
+    const sentMessageIdsInEvents = new Set<string>();
+    const receivedMessageIdsInEvents = new Set<string>();
 
-    for (let i = 0; i < messages.length; i++) {
-      const msg = messages[i] as ThreadMessage;
+    for (const e of existingEvents) {
+      const messageIds = e.refs?.messageIds;
+      if (!Array.isArray(messageIds) || messageIds.length === 0) continue;
+
+      if (e.kind === "message.sent") {
+        for (const id of messageIds) sentMessageIdsInEvents.add(id);
+      }
+
+      if (e.kind === "message.received") {
+        for (const id of messageIds) receivedMessageIdsInEvents.add(id);
+      }
+    }
+
+    for (let i = 0; i < typedMessages.length; i++) {
+      const msg = typedMessages[i];
       if (seenMessageIdsRef.current.has(msg.id)) continue;
 
-      // Event Deduplication: Skip recording for text-only follow-ups if previous was a card
-      const prevMsg = i > 0 ? (messages[i - 1] as ThreadMessage) : null;
-      const isRedundant =
-        msg.role === "assistant" &&
-        !hasComponent(msg) &&
-        prevMsg?.role === "assistant" &&
-        hasComponent(prevMsg);
-
-      if (isRedundant) {
+      if (isRedundantAssistantTextOnlyMessage(typedMessages, i)) {
         seenMessageIdsRef.current.add(msg.id);
         continue;
       }
 
       // Double check store to prevent duplication on remount (tab switch)
-      const hasSentEvent = existingEvents.some(
-        (e) => e.kind === "message.sent" && e.refs?.messageIds?.includes(msg.id)
-      );
-      const hasReceivedEvent = existingEvents.some(
-        (e) =>
-          e.kind === "message.received" && e.refs?.messageIds?.includes(msg.id)
-      );
+      const hasSentEvent = sentMessageIdsInEvents.has(msg.id);
+      const hasReceivedEvent = receivedMessageIdsInEvents.has(msg.id);
 
       const contentText = getMessageText(msg.content);
       if (!contentText) continue;
@@ -143,7 +153,7 @@ export function ChatThread() {
       seenMessageIdsRef.current.add(msg.id);
       pendingAssistantMessageIdsRef.current.delete(msg.id);
     }
-  }, [threadId, thread?.messages, generationStage, recordEvent, state.events]);
+  }, [threadId, thread?.messages, generationStage, recordEvent]);
 
   const messages = thread?.messages || [];
   const isGenerating =
@@ -164,23 +174,12 @@ export function ChatThread() {
           </p>
         </div>
       ) : (
-        messages.map((message: unknown, index: number) => {
-          const msg = message as ThreadMessage;
+        (messages as ThreadMessage[]).map((msg: ThreadMessage, index: number) => {
           const textContent = getMessageText(msg.content);
 
-          // Multi-message deduplication:
-          // If this is an assistant message with NO component, but the PREVIOUS message
-          // was an assistant message WITH a component, we hide this one to avoid duplication.
-          const prevMsg =
-            index > 0 ? (messages[index - 1] as ThreadMessage) : null;
-
-          const isRedundantTextOnly =
-            msg.role === "assistant" &&
-            !hasComponent(msg) &&
-            prevMsg?.role === "assistant" &&
-            hasComponent(prevMsg);
-
-          if (isRedundantTextOnly) return null;
+          if (isRedundantAssistantTextOnlyMessage(messages as ThreadMessage[], index)) {
+            return null;
+          }
 
           return (
             <div key={msg.id} className="flex gap-3">
@@ -222,26 +221,40 @@ export function ChatThread() {
 
                   {/* Render tool_calls (Newer SDK pattern) */}
                   {Array.isArray(msg.tool_calls) &&
-                    msg.tool_calls.map((toolCall: unknown) => {
-                      const tc = toolCall as {
-                        id: string;
-                        function?: { name: string; arguments: string };
-                      };
-                      const { name, arguments: argsStr } = tc.function || {};
-                      if (!name) return null;
-                      let args = {};
-                      try {
-                        args =
-                          typeof argsStr === "string"
-                            ? JSON.parse(argsStr)
-                            : argsStr;
-                      } catch (e) {
-                        console.error("Failed to parse tool_call args:", e);
+                    msg.tool_calls.map((toolCall: unknown, toolCallIndex: number) => {
+                      const tc =
+                        toolCall && typeof toolCall === "object"
+                          ? (toolCall as Record<string, unknown>)
+                          : null;
+
+                      const id =
+                        (tc?.id && typeof tc.id === "string" ? tc.id : null) ??
+                        `${msg.id}-tool-call-${toolCallIndex}`;
+
+                      const fn =
+                        tc?.function && typeof tc.function === "object"
+                          ? (tc.function as Record<string, unknown>)
+                          : null;
+
+                      const name = fn?.name;
+                      const rawArguments = fn?.arguments;
+                      if (typeof name !== "string" || name.length === 0) return null;
+
+                      const argsResult = parseToolArguments(rawArguments);
+                      if (!argsResult.ok) {
+                        return (
+                          <div key={id} className="mt-2">
+                            <InvalidToolArguments
+                              toolName={name}
+                              detail={argsResult.error}
+                            />
+                          </div>
+                        );
                       }
+
                       return (
-                        <div key={tc.id} className="mt-2">
-                          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                          <ToolRenderer toolName={name} args={args as any} />
+                        <div key={id} className="mt-2">
+                          <ToolRenderer toolName={name} args={argsResult.args} />
                         </div>
                       );
                     })}
@@ -281,7 +294,7 @@ export function ChatThread() {
 interface ToolInvocation {
   toolName: string;
   toolCallId: string;
-  args: Record<string, unknown>;
+  args: unknown;
 }
 
 interface ThreadMessage {
@@ -306,18 +319,24 @@ function ToolRenderer({
   args,
 }: {
   toolName: string;
-  args: Record<string, unknown>;
+  args: unknown;
 }) {
   switch (toolName) {
     case "SummaryCard":
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return <SummaryCard {...(args as any)} />;
+      return renderValidatedTool(toolName, SummaryCardSchema, args, (validatedArgs) => (
+        <SummaryCard {...validatedArgs} />
+      ));
     case "DataTable":
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return <DataTable {...(args as any)} />;
+      return renderValidatedTool(
+        toolName,
+        DataTableSchema,
+        coerceDataTableArgs(args),
+        (validatedArgs) => <DataTableTool {...validatedArgs} />
+      );
     case "Graph":
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return <Graph {...(args as any)} />;
+      return renderValidatedTool(toolName, GraphSchema, args, (validatedArgs) => (
+        <Graph {...validatedArgs} />
+      ));
     default:
       return (
         <div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
@@ -325,4 +344,103 @@ function ToolRenderer({
         </div>
       );
   }
+}
+
+function InvalidToolArguments({ toolName, detail }: { toolName: string; detail: string }) {
+  return (
+    <div className="rounded-md border border-dashed bg-muted/10 p-4 text-sm">
+      <p className="font-medium">Unable to render {toolName}</p>
+      <p className="mt-1 text-muted-foreground">{detail}</p>
+    </div>
+  );
+}
+
+function parseToolArguments(
+  rawArguments: unknown
+): { ok: true; args: unknown } | { ok: false; error: string } {
+  if (rawArguments == null) {
+    return { ok: true, args: {} };
+  }
+
+  if (typeof rawArguments === "string") {
+    try {
+      return { ok: true, args: JSON.parse(rawArguments) };
+    } catch {
+      return { ok: false, error: "Tool arguments were not valid JSON." };
+    }
+  }
+
+  if (typeof rawArguments === "object") {
+    return { ok: true, args: rawArguments };
+  }
+
+  return { ok: false, error: "Tool arguments had an unexpected type." };
+}
+
+function renderValidatedTool<TSchema extends z.ZodTypeAny>(
+  toolName: string,
+  schema: TSchema,
+  args: unknown,
+  render: (validatedArgs: z.infer<TSchema>) => React.ReactNode
+) {
+  const result = schema.safeParse(args);
+
+  if (!result.success) {
+    return <InvalidToolArguments toolName={toolName} detail={formatZodError(result.error)} />;
+  }
+
+  return render(result.data);
+}
+
+function coerceDataTableArgs(args: unknown): unknown {
+  if (!args || typeof args !== "object") return args;
+
+  const record = args as Record<string, unknown>;
+  const rows = record.rows;
+
+  if (Array.isArray(rows)) {
+    return {
+      ...record,
+      rows: JSON.stringify(rows),
+    };
+  }
+
+  return args;
+}
+
+function formatZodError(error: z.ZodError): string {
+  const [first, ...rest] = error.issues;
+  if (!first) return "Invalid tool arguments.";
+
+  const path = first.path.length > 0 ? first.path.join(".") : "args";
+  const extraCount = rest.length;
+
+  return extraCount > 0
+    ? `${path}: ${first.message} (+${extraCount} more)`
+    : `${path}: ${first.message}`;
+}
+
+function getPreviousAssistantMessage(
+  messages: ThreadMessage[],
+  index: number
+): ThreadMessage | null {
+  for (let i = index - 1; i >= 0; i--) {
+    const prev = messages[i];
+    if (prev.role === "assistant") return prev;
+    if (prev.role === "user") return null;
+  }
+
+  return null;
+}
+
+function isRedundantAssistantTextOnlyMessage(
+  messages: ThreadMessage[],
+  index: number
+): boolean {
+  const msg = messages[index];
+  if (!msg || msg.role !== "assistant") return false;
+  if (hasComponent(msg)) return false;
+
+  const prevAssistant = getPreviousAssistantMessage(messages, index);
+  return prevAssistant != null && hasComponent(prevAssistant);
 }
