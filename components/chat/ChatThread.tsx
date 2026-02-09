@@ -69,34 +69,6 @@ export function ChatThread() {
       generationStage === "COMPLETE" ||
       generationStage === "ERROR";
 
-    if (threadId !== lastThreadIdRef.current) {
-      lastThreadIdRef.current = threadId;
-      seenMessageIdsRef.current = new Set();
-      pendingAssistantMessageIdsRef.current = new Set();
-    }
-
-    if (isGenerationSettled && pendingAssistantMessageIdsRef.current.size > 0) {
-      const messagesById = new Map(typedMessages.map((m) => [m.id, m] as const));
-
-      for (const id of Array.from(pendingAssistantMessageIdsRef.current)) {
-        const msg = messagesById.get(id);
-        if (!msg) {
-          pendingAssistantMessageIdsRef.current.delete(id);
-          continue;
-        }
-
-        const contentText = getMessageText(msg.content);
-        if (!contentText) continue;
-
-        recordEvent(
-          "message.received",
-          { outputs: contentText },
-          { messageIds: [msg.id] }
-        );
-        pendingAssistantMessageIdsRef.current.delete(id);
-      }
-    }
-
     const existingEvents = eventsRef.current;
     const sentMessageIdsInEvents = new Set<string>();
     const receivedMessageIdsInEvents = new Set<string>();
@@ -111,6 +83,51 @@ export function ChatThread() {
 
       if (e.kind === "message.received") {
         for (const id of messageIds) receivedMessageIdsInEvents.add(id);
+      }
+    }
+
+    if (threadId !== lastThreadIdRef.current) {
+      lastThreadIdRef.current = threadId;
+      seenMessageIdsRef.current = new Set();
+      pendingAssistantMessageIdsRef.current = new Set();
+    }
+
+    if (isGenerationSettled && pendingAssistantMessageIdsRef.current.size > 0) {
+      const messagesById = new Map(typedMessages.map((m) => [m.id, m] as const));
+      const messageIndexById = new Map(typedMessages.map((m, i) => [m.id, i] as const));
+
+      for (const id of Array.from(pendingAssistantMessageIdsRef.current)) {
+        if (receivedMessageIdsInEvents.has(id)) {
+          pendingAssistantMessageIdsRef.current.delete(id);
+          continue;
+        }
+
+        const msg = messagesById.get(id);
+        if (!msg) {
+          pendingAssistantMessageIdsRef.current.delete(id);
+          continue;
+        }
+
+        const msgIndex = messageIndexById.get(msg.id);
+        if (msgIndex != null && isRedundantAssistantTextOnlyMessage(typedMessages, msgIndex)) {
+          pendingAssistantMessageIdsRef.current.delete(id);
+          continue;
+        }
+
+        const contentText = getMessageText(msg.content);
+        if (!contentText) {
+          pendingAssistantMessageIdsRef.current.delete(id);
+          continue;
+        }
+
+        recordEvent(
+          "message.received",
+          { outputs: contentText },
+          { messageIds: [msg.id] }
+        );
+
+        receivedMessageIdsInEvents.add(msg.id);
+        pendingAssistantMessageIdsRef.current.delete(id);
       }
     }
 
@@ -144,12 +161,14 @@ export function ChatThread() {
           { inputs: contentText },
           { messageIds: [msg.id] }
         );
+        sentMessageIdsInEvents.add(msg.id);
       } else if (msg.role === "assistant" && !hasReceivedEvent) {
         recordEvent(
           "message.received",
           { outputs: contentText },
           { messageIds: [msg.id] }
         );
+        receivedMessageIdsInEvents.add(msg.id);
       }
 
       seenMessageIdsRef.current.add(msg.id);
