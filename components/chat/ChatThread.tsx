@@ -419,7 +419,21 @@ function parseToolArguments(
 
   if (typeof rawArguments === "string") {
     try {
-      return { ok: true, args: JSON.parse(rawArguments) };
+      const parsed = JSON.parse(rawArguments) as unknown;
+
+      if (parsed == null) {
+        return { ok: false, error: "Tool arguments were missing." };
+      }
+
+      if (typeof parsed !== "object") {
+        return { ok: false, error: "Tool arguments must be a JSON object." };
+      }
+
+      if (Array.isArray(parsed)) {
+        return { ok: false, error: "Tool arguments must be an object, not an array." };
+      }
+
+      return { ok: true, args: parsed };
     } catch {
       return { ok: false, error: "Tool arguments were not valid JSON." };
     }
