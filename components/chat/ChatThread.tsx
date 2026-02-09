@@ -72,6 +72,8 @@ export function ChatThread() {
     const existingEvents = eventsRef.current;
     const sentMessageIdsInEvents = new Set<string>();
     const receivedMessageIdsInEvents = new Set<string>();
+    const sentMessageIdsRecordedThisRun = new Set<string>();
+    const receivedMessageIdsRecordedThisRun = new Set<string>();
 
     for (const e of existingEvents) {
       const messageIds = e.refs?.messageIds;
@@ -86,6 +88,17 @@ export function ChatThread() {
       }
     }
 
+    function hasSentEventForMessageId(messageId: string): boolean {
+      return sentMessageIdsInEvents.has(messageId) || sentMessageIdsRecordedThisRun.has(messageId);
+    }
+
+    function hasReceivedEventForMessageId(messageId: string): boolean {
+      return (
+        receivedMessageIdsInEvents.has(messageId) ||
+        receivedMessageIdsRecordedThisRun.has(messageId)
+      );
+    }
+
     if (threadId !== lastThreadIdRef.current) {
       lastThreadIdRef.current = threadId;
       seenMessageIdsRef.current = new Set();
@@ -97,7 +110,7 @@ export function ChatThread() {
       const messageIndexById = new Map(typedMessages.map((m, i) => [m.id, i] as const));
 
       for (const id of Array.from(pendingAssistantMessageIdsRef.current)) {
-        if (receivedMessageIdsInEvents.has(id)) {
+        if (hasReceivedEventForMessageId(id)) {
           pendingAssistantMessageIdsRef.current.delete(id);
           continue;
         }
@@ -126,7 +139,7 @@ export function ChatThread() {
           { messageIds: [msg.id] }
         );
 
-        receivedMessageIdsInEvents.add(msg.id);
+        receivedMessageIdsRecordedThisRun.add(msg.id);
         pendingAssistantMessageIdsRef.current.delete(id);
       }
     }
@@ -141,8 +154,8 @@ export function ChatThread() {
       }
 
       // Double check store to prevent duplication on remount (tab switch)
-      const hasSentEvent = sentMessageIdsInEvents.has(msg.id);
-      const hasReceivedEvent = receivedMessageIdsInEvents.has(msg.id);
+      const hasSentEvent = hasSentEventForMessageId(msg.id);
+      const hasReceivedEvent = hasReceivedEventForMessageId(msg.id);
 
       const contentText = getMessageText(msg.content);
       if (!contentText) continue;
@@ -161,14 +174,14 @@ export function ChatThread() {
           { inputs: contentText },
           { messageIds: [msg.id] }
         );
-        sentMessageIdsInEvents.add(msg.id);
+        sentMessageIdsRecordedThisRun.add(msg.id);
       } else if (msg.role === "assistant" && !hasReceivedEvent) {
         recordEvent(
           "message.received",
           { outputs: contentText },
           { messageIds: [msg.id] }
         );
-        receivedMessageIdsInEvents.add(msg.id);
+        receivedMessageIdsRecordedThisRun.add(msg.id);
       }
 
       seenMessageIdsRef.current.add(msg.id);
