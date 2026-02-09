@@ -12,12 +12,13 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-type DataTableCellValue = string | number | boolean | null | undefined;
+type DataTableCellValue = string | number | boolean | null;
+type DataTableRow = Partial<Record<string, DataTableCellValue>>;
 
 interface DataTableProps {
   title: string;
   columns: { key: string; label: string }[];
-  rows: string | Record<string, DataTableCellValue>[];
+  rows: string | DataTableRow[];
   maxRows?: number;
 }
 
@@ -27,20 +28,25 @@ export function DataTable({
   rows,
   maxRows = 5,
 }: DataTableProps) {
-  const parsedRows = useMemo((): Record<string, DataTableCellValue>[] => {
+  const { parsedRows, parseError } = useMemo(() => {
     if (typeof rows === "string") {
       try {
         const parsed = JSON.parse(rows);
-        return Array.isArray(parsed) ? (parsed as Record<string, DataTableCellValue>[]) : [];
+        if (Array.isArray(parsed)) {
+          return { parsedRows: parsed as DataTableRow[], parseError: false };
+        }
+
+        return { parsedRows: [], parseError: true };
       } catch (error) {
         if (process.env.NODE_ENV !== "production") {
           console.error("Failed to parse DataTable rows:", error);
         }
-        return [];
+
+        return { parsedRows: [], parseError: true };
       }
     }
 
-    return Array.isArray(rows) ? rows : [];
+    return { parsedRows: Array.isArray(rows) ? rows : [], parseError: false };
   }, [rows]);
 
   const safeColumns = columns || [];
@@ -63,17 +69,31 @@ export function DataTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {displayRows.map((row, i) => (
-              <TableRow key={`row-${i}`}>
-                {safeColumns.map((col, j) => (
-                  <TableCell key={`cell-${i}-${col.key}-${j}`}>
-                    {row[col.key] === null || row[col.key] === undefined
-                      ? "-"
-                      : String(row[col.key])}
-                  </TableCell>
-                ))}
+            {parseError ? (
+              <TableRow>
+                <TableCell
+                  colSpan={Math.max(1, safeColumns.length)}
+                  className="p-4 text-center text-xs text-muted-foreground"
+                >
+                  Unable to display rows
+                </TableCell>
               </TableRow>
-            ))}
+            ) : (
+              displayRows.map((row, i) => (
+                <TableRow key={`row-${i}`}>
+                  {safeColumns.map((col, j) => {
+                    const value = row[col.key];
+                    return (
+                      <TableCell key={`cell-${i}-${col.key}-${j}`}>
+                        {value === null || value === undefined
+                          ? "-"
+                          : String(value)}
+                      </TableCell>
+                    );
+                  })}
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
         {parsedRows.length > maxRows && (
