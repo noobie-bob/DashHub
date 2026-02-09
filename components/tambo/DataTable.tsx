@@ -70,11 +70,13 @@ export function DataTable({
 }
 
 const DataTableRowsSchema = z.array(
-  z.record(z.union([z.string(), z.number(), z.boolean(), z.null()]))
+  z.record(z.union([z.string(), z.number(), z.boolean(), z.null(), z.undefined()]))
 );
 
-let hasWarnedInvalidJson = false;
-let hasWarnedWrongShape = false;
+const WARN_INTERVAL_MS = 60_000;
+
+let lastWarnInvalidJsonAt = 0;
+let lastWarnWrongShapeAt = 0;
 
 function warnInvalidJson(error: unknown) {
   if (process.env.NODE_ENV !== "production") {
@@ -82,9 +84,11 @@ function warnInvalidJson(error: unknown) {
     return;
   }
 
-  if (hasWarnedInvalidJson) return;
+  const now = Date.now();
+  if (now - lastWarnInvalidJsonAt < WARN_INTERVAL_MS) return;
+
   console.warn("Failed to parse DataTable rows JSON.");
-  hasWarnedInvalidJson = true;
+  lastWarnInvalidJsonAt = now;
 }
 
 function warnWrongShape(details: unknown) {
@@ -93,15 +97,17 @@ function warnWrongShape(details: unknown) {
     return;
   }
 
-  if (hasWarnedWrongShape) return;
+  const now = Date.now();
+  if (now - lastWarnWrongShapeAt < WARN_INTERVAL_MS) return;
+
   console.warn("DataTable rows JSON had an unexpected shape.");
-  hasWarnedWrongShape = true;
+  lastWarnWrongShapeAt = now;
 }
 
 interface DataTableToolProps {
   title: string;
   columns: { key: string; label: string }[];
-  rows: string;
+  rows: string | unknown[];
   maxRows?: number;
 }
 
@@ -112,6 +118,27 @@ export function DataTableTool({
   maxRows,
 }: DataTableToolProps) {
   const parsedRows = useMemo(() => {
+    if (Array.isArray(rows)) {
+      const result = DataTableRowsSchema.safeParse(rows);
+      if (!result.success) {
+        warnWrongShape(result.error);
+        return {
+          ok: false,
+          error: "DataTable rows must be a JSON array of objects.",
+        } as const;
+      }
+
+      return { ok: true, rows: result.data } as const;
+    }
+
+    if (typeof rows !== "string") {
+      warnWrongShape(rows);
+      return {
+        ok: false,
+        error: "DataTable rows must be a JSON array of objects.",
+      } as const;
+    }
+
     try {
       const parsed = JSON.parse(rows);
       const result = DataTableRowsSchema.safeParse(parsed);

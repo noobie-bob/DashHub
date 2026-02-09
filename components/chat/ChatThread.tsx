@@ -47,6 +47,8 @@ export function ChatThread() {
   const threadId = (thread as { id?: string } | null | undefined)?.id ?? null;
   const eventsRef = useRef(state.events);
 
+  // Keep `state.events` out of the message-processing effect deps.
+  // Recording events updates `state.events` and would otherwise cause extra reruns.
   useEffect(() => {
     eventsRef.current = state.events;
   }, [state.events]);
@@ -314,6 +316,18 @@ function hasComponent(m: Partial<ThreadMessage>): boolean {
   );
 }
 
+const DataTableLegacyArgsSchema = z.object({
+  title: z.string(),
+  columns: z.array(
+    z.object({
+      key: z.string(),
+      label: z.string(),
+    })
+  ),
+  rows: z.array(z.record(z.unknown())),
+  maxRows: z.number().optional(),
+});
+
 function ToolRenderer({
   toolName,
   args,
@@ -327,12 +341,7 @@ function ToolRenderer({
         <SummaryCard {...validatedArgs} />
       ));
     case "DataTable":
-      return renderValidatedTool(
-        toolName,
-        DataTableSchema,
-        coerceDataTableArgs(args),
-        (validatedArgs) => <DataTableTool {...validatedArgs} />
-      );
+      return renderDataTable(toolName, args);
     case "Graph":
       return renderValidatedTool(toolName, GraphSchema, args, (validatedArgs) => (
         <Graph {...validatedArgs} />
@@ -344,6 +353,20 @@ function ToolRenderer({
         </div>
       );
   }
+}
+
+function renderDataTable(toolName: string, args: unknown) {
+  const primary = DataTableSchema.safeParse(args);
+  if (primary.success) {
+    return <DataTableTool {...primary.data} />;
+  }
+
+  const legacy = DataTableLegacyArgsSchema.safeParse(args);
+  if (legacy.success) {
+    return <DataTableTool {...legacy.data} />;
+  }
+
+  return <InvalidToolArguments toolName={toolName} detail={formatZodError(primary.error)} />;
 }
 
 function InvalidToolArguments({ toolName, detail }: { toolName: string; detail: string }) {
@@ -359,7 +382,7 @@ function parseToolArguments(
   rawArguments: unknown
 ): { ok: true; args: unknown } | { ok: false; error: string } {
   if (rawArguments == null) {
-    return { ok: true, args: {} };
+    return { ok: false, error: "Tool arguments were missing." };
   }
 
   if (typeof rawArguments === "string") {
@@ -390,22 +413,6 @@ function renderValidatedTool<TSchema extends z.ZodTypeAny>(
   }
 
   return render(result.data);
-}
-
-function coerceDataTableArgs(args: unknown): unknown {
-  if (!args || typeof args !== "object") return args;
-
-  const record = args as Record<string, unknown>;
-  const rows = record.rows;
-
-  if (Array.isArray(rows)) {
-    return {
-      ...record,
-      rows: JSON.stringify(rows),
-    };
-  }
-
-  return args;
 }
 
 function formatZodError(error: z.ZodError): string {
