@@ -31,7 +31,7 @@ function parseRowsInput(rows: string | DataTableRow[]): {
         console.error("DataTable rows JSON is valid but not an array:", parsed);
       }
 
-      return { parsedRows: [], parseError: true };
+      return { parsedRows: [], parseError: false };
     }
 
     return { parsedRows: parsed as DataTableRow[], parseError: false };
@@ -90,7 +90,7 @@ export function DataTable({
                   colSpan={Math.max(1, safeColumns.length)}
                   className="p-4 text-center text-xs text-muted-foreground"
                 >
-                  Unable to display rows. Expected a JSON array of row objects.
+                  Unable to display rows (invalid JSON).
                 </TableCell>
               </TableRow>
             ) : (
