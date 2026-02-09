@@ -84,7 +84,8 @@ const DETAILS_COLLECTION_LIMIT = 200;
 * Safe, cycle-aware formatter for `EventDetails`.
 *
 * Intended for human-readable debug output (not a stable serialization format).
-* `Map`/`Set` contents are truncated, and repeated references may render as "[Circular]".
+* `Map`/`Set` are rendered into an ad-hoc object with metadata keys and truncated contents.
+* Any repeated reference (including shared refs) may render as "[Circular]".
 */
 function safeStringify(value: unknown, { indent = 0 }: { indent?: number } = {}): string {
   if (value === undefined) return "undefined";
