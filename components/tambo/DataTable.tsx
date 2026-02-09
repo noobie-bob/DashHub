@@ -15,6 +15,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 type DataTableCellValue = string | number | boolean | null;
 type DataTableRow = Partial<Record<string, DataTableCellValue>>;
 
+let hasWarnedInvalidJson = false;
+let hasWarnedWrongShape = false;
+
 function parseRowsInput(rows: string | DataTableRow[]): {
   parsedRows: DataTableRow[];
   parseError: boolean;
@@ -29,6 +32,9 @@ function parseRowsInput(rows: string | DataTableRow[]): {
     if (!Array.isArray(parsed)) {
       if (process.env.NODE_ENV !== "production") {
         console.error("DataTable rows JSON is valid but not an array:", parsed);
+      } else if (!hasWarnedWrongShape) {
+        console.warn("DataTable rows JSON is valid but not an array.");
+        hasWarnedWrongShape = true;
       }
 
       return { parsedRows: [], parseError: false };
@@ -38,6 +44,9 @@ function parseRowsInput(rows: string | DataTableRow[]): {
   } catch (error) {
     if (process.env.NODE_ENV !== "production") {
       console.error("Failed to parse DataTable rows JSON:", error);
+    } else if (!hasWarnedInvalidJson) {
+      console.warn("Failed to parse DataTable rows JSON.");
+      hasWarnedInvalidJson = true;
     }
 
     return { parsedRows: [], parseError: true };
@@ -90,7 +99,7 @@ export function DataTable({
                   colSpan={Math.max(1, safeColumns.length)}
                   className="p-4 text-center text-xs text-muted-foreground"
                 >
-                  Unable to display rows (invalid JSON).
+                  Unable to display table rows due to an invalid format.
                 </TableCell>
               </TableRow>
             ) : (
