@@ -426,6 +426,10 @@ function parseToolArguments(
   }
 
   if (typeof rawArguments === "object") {
+    if (Array.isArray(rawArguments)) {
+      return { ok: false, error: "Tool arguments must be an object, not an array." };
+    }
+
     return { ok: true, args: rawArguments };
   }
 
