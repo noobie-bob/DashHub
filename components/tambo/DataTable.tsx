@@ -7,7 +7,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { z } from "zod";
 
 interface DataTableProps {
@@ -75,35 +75,6 @@ const DataTableRowsSchema = z.array(
 
 const WARN_INTERVAL_MS = 60_000;
 
-let lastWarnInvalidJsonAt = 0;
-let lastWarnWrongShapeAt = 0;
-
-function warnInvalidJson(error: unknown) {
-  if (process.env.NODE_ENV !== "production") {
-    console.error("Failed to parse DataTable rows JSON:", error);
-    return;
-  }
-
-  const now = Date.now();
-  if (now - lastWarnInvalidJsonAt < WARN_INTERVAL_MS) return;
-
-  console.warn("Failed to parse DataTable rows JSON.");
-  lastWarnInvalidJsonAt = now;
-}
-
-function warnWrongShape(details: unknown) {
-  if (process.env.NODE_ENV !== "production") {
-    console.error("DataTable rows JSON had an unexpected shape:", details);
-    return;
-  }
-
-  const now = Date.now();
-  if (now - lastWarnWrongShapeAt < WARN_INTERVAL_MS) return;
-
-  console.warn("DataTable rows JSON had an unexpected shape.");
-  lastWarnWrongShapeAt = now;
-}
-
 interface DataTableToolProps {
   title: string;
   columns: { key: string; label: string }[];
@@ -117,25 +88,27 @@ export function DataTableTool({
   rows,
   maxRows,
 }: DataTableToolProps) {
+  const lastWarnAtRef = useRef({ invalidJson: 0, wrongShape: 0 });
+
   const parsedRows = useMemo(() => {
     if (Array.isArray(rows)) {
       const result = DataTableRowsSchema.safeParse(rows);
       if (!result.success) {
-        warnWrongShape(result.error);
         return {
           ok: false,
           error: "DataTable rows must be a JSON array of objects.",
+          warn: { kind: "wrongShape", detail: result.error },
         } as const;
       }
 
-      return { ok: true, rows: result.data } as const;
+      return { ok: true, rows: result.data, warn: null } as const;
     }
 
     if (typeof rows !== "string") {
-      warnWrongShape(rows);
       return {
         ok: false,
         error: "DataTable rows must be a JSON array of objects.",
+        warn: { kind: "wrongShape", detail: rows },
       } as const;
     }
 
@@ -143,19 +116,52 @@ export function DataTableTool({
       const parsed = JSON.parse(rows);
       const result = DataTableRowsSchema.safeParse(parsed);
       if (!result.success) {
-        warnWrongShape(result.error);
         return {
           ok: false,
           error: "DataTable rows must be a JSON array of objects.",
+          warn: { kind: "wrongShape", detail: result.error },
         } as const;
       }
 
-      return { ok: true, rows: result.data } as const;
+      return { ok: true, rows: result.data, warn: null } as const;
     } catch (error) {
-      warnInvalidJson(error);
-      return { ok: false, error: "DataTable rows were not valid JSON." } as const;
+      return {
+        ok: false,
+        error: "DataTable rows were not valid JSON.",
+        warn: { kind: "invalidJson", detail: error },
+      } as const;
     }
   }, [rows]);
+
+  useEffect(() => {
+    if (parsedRows.ok || !parsedRows.warn) return;
+
+    if (process.env.NODE_ENV !== "production") {
+      if (parsedRows.warn.kind === "invalidJson") {
+        console.error("Failed to parse DataTable rows JSON:", parsedRows.warn.detail);
+      } else {
+        console.error(
+          "DataTable rows JSON had an unexpected shape:",
+          parsedRows.warn.detail
+        );
+      }
+
+      return;
+    }
+
+    const now = Date.now();
+    const last = lastWarnAtRef.current[parsedRows.warn.kind];
+    if (now - last < WARN_INTERVAL_MS) return;
+
+    lastWarnAtRef.current[parsedRows.warn.kind] = now;
+
+    if (parsedRows.warn.kind === "invalidJson") {
+      console.warn("Failed to parse DataTable rows JSON.");
+      return;
+    }
+
+    console.warn("DataTable rows JSON had an unexpected shape.");
+  }, [parsedRows]);
 
   if (!parsedRows.ok) {
     return (

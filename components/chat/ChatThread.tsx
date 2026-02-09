@@ -190,6 +190,7 @@ export function ChatThread() {
   }, [threadId, thread?.messages, generationStage, recordEvent]);
 
   const messages = thread?.messages || [];
+  const typedMessages = messages as ThreadMessage[];
   const isGenerating =
     generationStage !== "IDLE" &&
     generationStage !== "COMPLETE" &&
@@ -208,10 +209,11 @@ export function ChatThread() {
           </p>
         </div>
       ) : (
-        (messages as ThreadMessage[]).map((msg: ThreadMessage, index: number) => {
+        typedMessages.map((msg: ThreadMessage, index: number) => {
           const textContent = getMessageText(msg.content);
+          const hideAssistantText = msg.role === "assistant" && hasComponent(msg);
 
-          if (isRedundantAssistantTextOnlyMessage(messages as ThreadMessage[], index)) {
+          if (isRedundantAssistantTextOnlyMessage(typedMessages, index)) {
             return null;
           }
 
@@ -236,13 +238,7 @@ export function ChatThread() {
                 </p>
                 <div className="text-sm leading-relaxed whitespace-pre-wrap">
                   {/* Render Text Content (Hide if assistant message has generative UI to avoid redundancy) */}
-                  {textContent &&
-                    !(
-                      msg.role === "assistant" &&
-                      (msg.renderedComponent ||
-                        (msg.tool_calls && msg.tool_calls.length > 0) ||
-                        (msg.toolInvocations && msg.toolInvocations.length > 0))
-                    ) && (
+                  {!hideAssistantText && textContent && (
                       <div className="mb-2 prose prose-sm dark:prose-invert max-w-none">
                         <ReactMarkdown>{textContent}</ReactMarkdown>
                       </div>
@@ -398,7 +394,16 @@ function renderDataTable(toolName: string, args: unknown) {
     return <DataTableTool {...legacy.data} />;
   }
 
-  return <InvalidToolArguments toolName={toolName} detail={formatZodError(primary.error)} />;
+  const rows =
+    args && typeof args === "object" && !Array.isArray(args)
+      ? (args as Record<string, unknown>).rows
+      : null;
+
+  const detail = Array.isArray(rows)
+    ? formatZodError(legacy.error)
+    : formatZodError(primary.error);
+
+  return <InvalidToolArguments toolName={toolName} detail={detail} />;
 }
 
 function InvalidToolArguments({ toolName, detail }: { toolName: string; detail: string }) {
