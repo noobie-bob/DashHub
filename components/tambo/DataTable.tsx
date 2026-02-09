@@ -15,9 +15,42 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 type DataTableCellValue = string | number | boolean | null;
 type DataTableRow = Partial<Record<string, DataTableCellValue>>;
 
+function parseRowsInput(rows: string | DataTableRow[]): {
+  parsedRows: DataTableRow[];
+  parseError: boolean;
+} {
+  if (typeof rows !== "string") {
+    return { parsedRows: Array.isArray(rows) ? rows : [], parseError: false };
+  }
+
+  try {
+    const parsed = JSON.parse(rows);
+
+    if (!Array.isArray(parsed)) {
+      if (process.env.NODE_ENV !== "production") {
+        console.error("DataTable rows JSON is valid but not an array:", parsed);
+      }
+
+      return { parsedRows: [], parseError: true };
+    }
+
+    return { parsedRows: parsed as DataTableRow[], parseError: false };
+  } catch (error) {
+    if (process.env.NODE_ENV !== "production") {
+      console.error("Failed to parse DataTable rows JSON:", error);
+    }
+
+    return { parsedRows: [], parseError: true };
+  }
+}
+
 interface DataTableProps {
   title: string;
   columns: { key: string; label: string }[];
+  /**
+   * For best performance, treat `rows` as immutable: if you pass an array, pass a
+   * new reference whenever its contents change.
+   */
   rows: string | DataTableRow[];
   maxRows?: number;
 }
@@ -28,26 +61,7 @@ export function DataTable({
   rows,
   maxRows = 5,
 }: DataTableProps) {
-  const { parsedRows, parseError } = useMemo(() => {
-    if (typeof rows === "string") {
-      try {
-        const parsed = JSON.parse(rows);
-        if (Array.isArray(parsed)) {
-          return { parsedRows: parsed as DataTableRow[], parseError: false };
-        }
-
-        return { parsedRows: [], parseError: true };
-      } catch (error) {
-        if (process.env.NODE_ENV !== "production") {
-          console.error("Failed to parse DataTable rows:", error);
-        }
-
-        return { parsedRows: [], parseError: true };
-      }
-    }
-
-    return { parsedRows: Array.isArray(rows) ? rows : [], parseError: false };
-  }, [rows]);
+  const { parsedRows, parseError } = useMemo(() => parseRowsInput(rows), [rows]);
 
   const safeColumns = columns || [];
   const displayRows = parsedRows.slice(0, maxRows);
@@ -75,7 +89,7 @@ export function DataTable({
                   colSpan={Math.max(1, safeColumns.length)}
                   className="p-4 text-center text-xs text-muted-foreground"
                 >
-                  Unable to display rows
+                  Unable to display rows. Expected a JSON array of row objects.
                 </TableCell>
               </TableRow>
             ) : (
