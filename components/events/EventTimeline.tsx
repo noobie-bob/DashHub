@@ -76,6 +76,21 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return proto === Object.prototype || proto === null;
 }
 
+const DETAILS_COLLECTION_LIMIT = 200;
+
+function takeIterable<T>(iterable: Iterable<T>, limit: number): { items: T[]; truncated: boolean } {
+  const items: T[] = [];
+  let count = 0;
+
+  for (const item of iterable) {
+    if (count >= limit) return { items, truncated: true };
+    items.push(item);
+    count += 1;
+  }
+
+  return { items, truncated: false };
+}
+
 function safeStringify(value: unknown, { indent = 0 }: { indent?: number } = {}): string {
   if (value === undefined) return "undefined";
   if (typeof value === "bigint") return `${value.toString()}n`;
@@ -94,8 +109,30 @@ function safeStringify(value: unknown, { indent = 0 }: { indent?: number } = {})
       (_key, v) => {
         if (typeof v === "bigint") return `${v.toString()}n`;
         if (v instanceof Error) return { name: v.name, message: v.message };
-        if (v instanceof Map) return { "[Map]": Array.from(v.entries()) };
-        if (v instanceof Set) return { "[Set]": Array.from(v.values()) };
+        if (v instanceof Map) {
+          if (seen.has(v)) return "[Circular]";
+          seen.add(v);
+
+          const { items: entries, truncated } = takeIterable(v.entries(), DETAILS_COLLECTION_LIMIT);
+
+          return {
+            "[Map]": entries,
+            "[Map.size]": v.size,
+            ...(truncated ? { "[Map.truncated]": true } : {}),
+          };
+        }
+        if (v instanceof Set) {
+          if (seen.has(v)) return "[Circular]";
+          seen.add(v);
+
+          const { items: values, truncated } = takeIterable(v.values(), DETAILS_COLLECTION_LIMIT);
+
+          return {
+            "[Set]": values,
+            "[Set.size]": v.size,
+            ...(truncated ? { "[Set.truncated]": true } : {}),
+          };
+        }
         if (v instanceof Date) return v.toISOString();
 
         if (typeof v === "object" && v !== null) {
