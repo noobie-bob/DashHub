@@ -80,6 +80,12 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 // allocate an unbounded number of items.
 const DETAILS_COLLECTION_LIMIT = 200;
 
+/**
+* Safe, cycle-aware formatter for `EventDetails`.
+*
+* Intended for human-readable debug output (not a stable serialization format).
+* `Map`/`Set` contents are truncated, and repeated references may render as "[Circular]".
+*/
 function safeStringify(value: unknown, { indent = 0 }: { indent?: number } = {}): string {
   if (value === undefined) return "undefined";
   if (typeof value === "bigint") return `${value.toString()}n`;
