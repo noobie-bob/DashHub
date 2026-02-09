@@ -62,6 +62,7 @@ export function DataTable({
   maxRows = 5,
 }: DataTableProps) {
   const { parsedRows, parseError } = useMemo(() => parseRowsInput(rows), [rows]);
+  const showParseErrors = process.env.NODE_ENV !== "production";
 
   const safeColumns = columns || [];
   const displayRows = parsedRows.slice(0, maxRows);
@@ -83,7 +84,7 @@ export function DataTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {parseError ? (
+            {parseError && showParseErrors ? (
               <TableRow>
                 <TableCell
                   colSpan={Math.max(1, safeColumns.length)}
