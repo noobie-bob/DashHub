@@ -32,7 +32,10 @@ export function DataTable({
       try {
         const parsed = JSON.parse(rows);
         return Array.isArray(parsed) ? (parsed as Record<string, DataTableCellValue>[]) : [];
-      } catch {
+      } catch (error) {
+        if (process.env.NODE_ENV !== "production") {
+          console.error("Failed to parse DataTable rows:", error);
+        }
         return [];
       }
     }
