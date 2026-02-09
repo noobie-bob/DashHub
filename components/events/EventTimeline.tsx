@@ -78,19 +78,6 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 const DETAILS_COLLECTION_LIMIT = 200;
 
-function takeIterable<T>(iterable: Iterable<T>, limit: number): { items: T[]; truncated: boolean } {
-  const items: T[] = [];
-  let count = 0;
-
-  for (const item of iterable) {
-    if (count >= limit) return { items, truncated: true };
-    items.push(item);
-    count += 1;
-  }
-
-  return { items, truncated: false };
-}
-
 function safeStringify(value: unknown, { indent = 0 }: { indent?: number } = {}): string {
   if (value === undefined) return "undefined";
   if (typeof value === "bigint") return `${value.toString()}n`;
@@ -104,6 +91,9 @@ function safeStringify(value: unknown, { indent = 0 }: { indent?: number } = {})
 
   try {
     const seen = new WeakSet<object>();
+
+    // Note: we treat any repeated reference as "[Circular]". This includes both real
+    // cycles and shared references elsewhere in the graph.
     const serialized = JSON.stringify(
       value,
       (_key, v) => {
@@ -113,7 +103,18 @@ function safeStringify(value: unknown, { indent = 0 }: { indent?: number } = {})
           if (seen.has(v)) return "[Circular]";
           seen.add(v);
 
-          const { items: entries, truncated } = takeIterable(v.entries(), DETAILS_COLLECTION_LIMIT);
+          const entries: [unknown, unknown][] = [];
+          let truncated = false;
+          let index = 0;
+
+          for (const entry of v.entries()) {
+            if (index >= DETAILS_COLLECTION_LIMIT) {
+              truncated = true;
+              break;
+            }
+            entries.push(entry);
+            index += 1;
+          }
 
           return {
             "[Map]": entries,
@@ -125,7 +126,18 @@ function safeStringify(value: unknown, { indent = 0 }: { indent?: number } = {})
           if (seen.has(v)) return "[Circular]";
           seen.add(v);
 
-          const { items: values, truncated } = takeIterable(v.values(), DETAILS_COLLECTION_LIMIT);
+          const values: unknown[] = [];
+          let truncated = false;
+          let index = 0;
+
+          for (const item of v.values()) {
+            if (index >= DETAILS_COLLECTION_LIMIT) {
+              truncated = true;
+              break;
+            }
+            values.push(item);
+            index += 1;
+          }
 
           return {
             "[Set]": values,
