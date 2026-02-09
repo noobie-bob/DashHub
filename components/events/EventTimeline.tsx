@@ -76,6 +76,8 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return proto === Object.prototype || proto === null;
 }
 
+// Limit entries/values serialized for event details so expanding a large payload doesn't
+// allocate an unbounded number of items.
 const DETAILS_COLLECTION_LIMIT = 200;
 
 function safeStringify(value: unknown, { indent = 0 }: { indent?: number } = {}): string {
